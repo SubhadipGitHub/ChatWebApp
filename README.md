@@ -1,77 +1,122 @@
-Chat Application
-Vision
-The Chat Application is designed to provide a secure, real-time messaging platform using modern technologies. The app features end-to-end encryption for messages, ensuring that only the intended recipients can read them. The project leverages FastAPI for the back end, React for the front end, and MongoDB for storage. This setup offers a scalable, responsive, and interactive user experience.
+# Chat Application Using FastAPI, React, and MongoDB
 
-Implementation
-Back-End
-Framework: FastAPI
-Database: MongoDB
-Authentication: JSON Web Tokens (JWT) for secure access control
-Encryption: Messages are encrypted using RSA and decrypted using the private key.
-Key Endpoints:
+Welcome to the **Chat Application** project! This is a full-stack web application that combines **FastAPI** for the backend and **React** for the frontend, with real-time communication powered by **Socket.io** and data stored in **MongoDB Atlas**.
 
-POST /register: Register a new user with public and private keys.
-POST /token: Authenticate users and issue JWT tokens.
-POST /send_message: Send an encrypted message to a receiver.
-GET /get_messages/{user_id}: Retrieve and decrypt messages for a specific user.
-WebSocket /ws/{user_id}: Real-time communication endpoint for chat.
-Front-End
-Framework: React
-Styling: Bootstrap 5.3
-Features:
+## System Overview
 
-Real-time message updates using WebSocket.
-Responsive design with Bootstrap for a seamless user experience.
-JWT-based authentication to secure the application.
-Deployment/Run Steps
-Back-End
-Install Dependencies:
+This chat system is designed to support real-time messaging, user authentication, and message persistence using modern web technologies. The system comprises:
 
-bash
-Copy code
-pip install fastapi uvicorn pymongo cryptography pyjwt
-Start FastAPI Server:
+- **Backend:** FastAPI
+- **Frontend:** React with Bootstrap
+- **Database:** MongoDB Atlas
+- **Real-time Messaging:** Socket.io
 
-Run the FastAPI server using Uvicorn:
+### Architecture Diagram
 
-bash
-Copy code
-uvicorn app:app --reload
-The server will be accessible at http://localhost:8000.
+Here is an overview of the system architecture:
 
-Front-End
-Install Dependencies:
+![Architecture Diagram](assets/system-architecture.png)
 
-Navigate to the chat-app directory and install the necessary dependencies:
+In this architecture:
+- The **frontend** is built using **React** and communicates with the backend using **REST API** calls for user management and fetching chat history.
+- **Socket.io** is used for real-time communication between clients.
+- **FastAPI** serves as the backend REST API and WebSocket server for real-time data.
+- **MongoDB Atlas** is used to store user information, chat history, and real-time message persistence.
 
-bash
-Copy code
-npx create-react-app chat-app
-cd chat-app
-npm install axios socket.io-client
-Start React Development Server:
+---
 
-Run the React development server:
+## Backend (FastAPI)
 
-bash
-Copy code
-npm start
-The front end will be accessible at http://localhost:3000.
+The backend of the application is powered by **FastAPI**, which provides both a REST API for managing users and chat messages, as well as WebSocket for real-time communication. 
 
-Configuration
-Update API Endpoints:
+Key features of the FastAPI backend:
+- **User registration and authentication** using OAuth2 and JWT tokens.
+- **Message storage** in MongoDB Atlas.
+- **WebSocket support** for real-time messaging.
 
-Ensure that the React application’s baseURL in src/App.js matches the URL where your FastAPI server is running.
+### Key Endpoints
 
-Secrets Management:
+- **POST /register:** Register a new user.
+- **POST /login:** User authentication with OAuth2.
+- **GET /chats/{user_id}:** Retrieve all messages for a user.
+- **WebSocket /ws/chat:** Real-time communication channel for chat.
 
-Update SECRET_KEY in app.py with a secure key of your choice.
-Make sure to securely manage and store your RSA keys and JWT secret.
-Testing
-Unit Tests: Write and run tests to verify the functionality of your FastAPI endpoints and React components.
-Integration Tests: Test the interaction between the front end and back end to ensure proper communication and data handling.
-Contributing
-Contributions are welcome! Please feel free to open issues or submit pull requests. For significant changes or new features, it’s best to discuss them in advance.
+![FastAPI Endpoints Diagram](assets/api-endpoints.png)
 
-License
-This project is licensed under the MIT License - see the LICENSE file for details.
+---
+
+## Frontend (React + Bootstrap)
+
+The **React** frontend is designed to be responsive, leveraging **Bootstrap 5.3** for layout and styling. The application includes two main views:
+
+1. **Chat List View**: Displays all conversations.
+2. **Chat Detail View**: Displays the messages in the selected conversation with a message input form for sending messages.
+
+Key components:
+- **ChatList:** Shows a list of chats for the current user.
+- **ChatDetail:** Displays the conversation for a selected chat.
+- **MessageForm:** Allows the user to type and send messages.
+
+### UI Design
+
+Here's an example of how the frontend layout is structured:
+
+![UI Layout](assets/ui-layout.png)
+
+---
+
+## Real-time Messaging (Socket.io)
+
+Real-time messaging is achieved with **Socket.io** on both the backend and frontend. The FastAPI WebSocket route connects clients to the chat room and broadcasts new messages to all participants.
+
+![Socket.io Flow](assets/socket-io-flow.png)
+
+- **Client-Side:** Messages sent from the chat input are transmitted via WebSocket to the backend.
+- **Server-Side:** FastAPI WebSocket handles broadcasting the messages to the appropriate chat participants.
+  
+---
+
+## Database (MongoDB Atlas)
+
+We use **MongoDB Atlas** to store user profiles, chat lists, and message history. The database is structured with collections for **users**, **chats**, and **messages**.
+
+### MongoDB Schema
+
+- **Users Collection:**
+  - `username`
+  - `password_hash`
+  - `email`
+  - `created_at`
+
+- **Chats Collection:**
+  - `user_id`
+  - `participants`
+  - `last_message`
+  - `created_at`
+
+- **Messages Collection:**
+  - `chat_id`
+  - `sender_id`
+  - `content`
+  - `timestamp`
+
+![MongoDB Schema Diagram](assets/mongodb-schema.png)
+
+---
+
+## Running the Application
+
+### Prerequisites
+
+To run this application, ensure that you have the following installed:
+- **Node.js** and **npm** (for React frontend)
+- **Python 3.8+** (for FastAPI backend)
+- **MongoDB Atlas** account (for database)
+
+### Installation and Setup
+
+1. Clone the repository:
+
+   ```bash
+   git clone https://github.com/yourusername/chat-app
+   cd chat-app
