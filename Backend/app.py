@@ -1,136 +1,96 @@
-from fastapi import FastAPI, HTTPException, Depends, WebSocket, WebSocketDisconnect
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import FastAPI, Depends, HTTPException, status
+from models import UserModel, ChatModel
+from auth import authenticate_user
 from pydantic import BaseModel
-from typing import List, Optional
-from pymongo import MongoClient
-from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives import serialization, hashes
-from cryptography.hazmat.primitives.asymmetric import padding
-import jwt
-import base64
-from datetime import datetime, timedelta
+from typing import List
 
 app = FastAPI()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-client = MongoClient('mongodb://localhost:27017/')
-db = client['chat_db']
-SECRET_KEY = "your_secret_key"
-ALGORITHM = "HS256"
 
-# Utility functions
-def encrypt_message(public_key_pem: bytes, message: str) -> bytes:
-    public_key = serialization.load_pem_public_key(public_key_pem)
-    encrypted_message = public_key.encrypt(
-        message.encode(),
-        padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()), algorithm=hashes.SHA256(), label=None)
-    )
-    return encrypted_message
-
-def decrypt_message(private_key_pem: bytes, encrypted_message: bytes) -> str:
-    private_key = serialization.load_pem_private_key(private_key_pem, password=None)
-    decrypted_message = private_key.decrypt(
-        encrypted_message,
-        padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()), algorithm=hashes.SHA256(), label=None)
-    )
-    return decrypted_message.decode()
-
-def create_jwt_token(user_id: str):
-    expires_delta = timedelta(hours=1)
-    expire = datetime.utcnow() + expires_delta
-    to_encode = {"exp": expire, "sub": user_id}
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-
-def verify_jwt_token(token: str):
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        return payload["sub"]
-    except jwt.PyJWTError:
-        return None
-
-class RegisterUser(BaseModel):
-    user_id: str
-    public_key: str
-    private_key: str
-
-class Login(BaseModel):
-    user_id: str
+# Request/Response Models
+class RegisterRequest(BaseModel):
+    username: str
+    email: str
     password: str
 
-class SendMessage(BaseModel):
-    sender_id: str
-    receiver_id: str
-    message: str
+# Request Models
+class MessageRequest(BaseModel):
+    chat_id: str = None  # Optional: chat_id will be checked, or a new one created
+    receiver_id: str     # Receiver's username
+    content: str
 
 class MessageResponse(BaseModel):
-    sender_id: str
-    message: str
+    sender: str
+    content: str
 
-@app.post('/register')
-async def register_user(user: RegisterUser):
-    db.users.update_one(
-        {'user_id': user.user_id},
-        {'$set': {'public_key': user.public_key, 'private_key': user.private_key}},
-        upsert=True
-    )
-    return {'status': 'success'}
+# Registration Route
+@app.post("/register")
+def register_user(request: RegisterRequest):
+    # Step 1: Check if the username already exists (now checking the _id field)
+    existing_username = UserModel.get_user_by_id(request.username)
+    if existing_username:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already exists")
 
-@app.post('/token')
-async def login(user: Login):
-    # Validate user credentials here
-    token = create_jwt_token(user.user_id)
-    return {"access_token": token, "token_type": "bearer"}
+    # Step 2: Check if the email already exists
+    existing_email = UserModel.get_user_by_email(request.email)
+    if existing_email:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already exists")
 
-@app.post('/send_message')
-async def send_message(message: SendMessage, token: str = Depends(oauth2_scheme)):
-    user_id = verify_jwt_token(token)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Invalid token")
+    # Step 3: Create the user with username stored in the _id field
+    UserModel.create_user(user_id=request.username, email=request.email, password=request.password)
     
-    receiver = db.users.find_one({'user_id': message.receiver_id})
-    if not receiver:
-        raise HTTPException(status_code=404, detail="Receiver not found")
-    
-    public_key_pem = receiver['public_key'].encode()
-    encrypted_message = encrypt_message(public_key_pem, message.message)
-    
-    db.messages.insert_one({
-        'sender_id': message.sender_id,
-        'receiver_id': message.receiver_id,
-        'message': base64.b64encode(encrypted_message).decode()
-    })
-    
-    return {'status': 'success'}
+    return {"msg": "User registered successfully", "user_id": request.username}
 
-@app.get('/get_messages/{user_id}', response_model=List[MessageResponse])
-async def get_messages(user_id: str, token: str = Depends(oauth2_scheme)):
-    user_id_from_token = verify_jwt_token(token)
-    if not user_id_from_token:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    
-    messages = db.messages.find({'receiver_id': user_id})
-    user = db.users.find_one({'user_id': user_id})
-    
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    decrypted_messages = []
-    for msg in messages:
-        encrypted_message = base64.b64decode(msg['message'])
-        decrypted_message = decrypt_message(user['private_key'].encode(), encrypted_message)
-        decrypted_messages.append({
-            'sender_id': msg['sender_id'],
-            'message': decrypted_message
+# Send Message Route (Authenticated)
+@app.post("/send_message")
+def send_message(request: MessageRequest, username: str = Depends(authenticate_user)):
+    # Step 1: Check if receiver_id exists (receiver_id refers to the _id of the user)
+    receiver = UserModel.get_user_by_id(request.receiver_id)
+    if receiver is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Receiver not found")
+
+    # Step 2: Check if chat_id was provided
+    if request.chat_id:
+        chat = ChatModel.get_chat(request.chat_id)
+        if chat is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chat not found")
+        # Ensure both participants are part of the chat
+        if username not in chat["participants"] or request.receiver_id not in chat["participants"]:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not a participant in this chat")
+    else:
+        # Step 3: No chat_id provided, check if a chat exists between the two users
+        existing_chat = ChatModel.collection.find_one({
+            "participants": {"$all": [username, request.receiver_id]}
         })
-    
-    return decrypted_messages
+        
+        if existing_chat:
+            chat = existing_chat
+        else:
+            # Step 4: Create new chat if none exists
+            new_chat = {
+                "participants": [username, request.receiver_id],
+                "messages": []
+            }
+            chat_id = ChatModel.collection.insert_one(new_chat).inserted_id
+            chat = ChatModel.get_chat(str(chat_id))
 
-@app.websocket("/ws/{user_id}")
-async def websocket_endpoint(websocket: WebSocket, user_id: str):
-    await websocket.accept()
-    try:
-        while True:
-            data = await websocket.receive_text()
-            # Handle WebSocket messages here
-            await websocket.send_text(f"Message text was: {data}")
-    except WebSocketDisconnect:
-        print(f"Client {user_id} disconnected")
+    # Step 5: Add message to the chat
+    ChatModel.add_message(str(chat["_id"]), sender=username, content=request.content)
+    return {"msg": "Message sent"}
+
+
+# Retrieve Messages Route (Authenticated)
+@app.get("/chats/{chat_id}/messages", response_model=List[MessageResponse])
+def get_messages(chat_id: str, username: str = Depends(authenticate_user)):
+    chat = ChatModel.get_chat(chat_id)
+    if chat is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chat not found")
+
+    if username not in chat["participants"]:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not a participant in this chat")
+    
+    return chat["messages"]
+
+# FastAPI root route
+@app.get("/")
+def read_root():
+    return {"msg": "Welcome to the FastAPI chat app!"}
