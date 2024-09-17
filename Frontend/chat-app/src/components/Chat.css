@@ -1,0 +1,15 @@
+/* Ensure the chat page layout expands to full height */
+.chat-page-container {
+    height: 100vh; /* Full viewport height */
+  }
+  
+  .chat-list-container {
+    height: 100%; /* Full height of parent */
+    flex: 1; /* Allows the ChatList to take remaining space */
+  }
+  
+  .chat-detail-container {
+    height: 100%; /* Full height of parent */
+    flex: 3; /* Adjust as needed */
+  }
+  

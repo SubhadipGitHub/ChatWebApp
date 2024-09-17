@@ -6,7 +6,7 @@ import json
 
 # Load the MongoDB URI from secret.json
 def load_mongodb_uri():
-    with open('secret.json', 'r') as file:
+    with open('secrets.json', 'r') as file:
         secrets = json.load(file)
         return secrets["MONGODB_URI"]
     

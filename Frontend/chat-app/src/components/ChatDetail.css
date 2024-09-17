@@ -1,0 +1,71 @@
+/* ChatDetail.css */
+
+.card {
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* Ensures the card expands to fill its parent */
+  }
+  
+  .card-body {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  
+  .chat-body {
+    flex: 1; /* Allows the chat body to expand and take up available space */
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    height: 100%;
+  }
+  
+  .chat-messages {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 60px; /* Space for input area */
+  }
+  
+  .message {
+    display: flex;
+    align-items: center;
+    margin: 5px;
+    max-width: 75%;
+    padding: 5px;
+    border-radius: 10px;
+  }
+  
+  .message-sent {
+    margin-left: auto;
+    background-color: #e1ffc7; /* Light green for sent messages */
+  }
+  
+  .message-received {
+    background-color: #f1f0f0; /* Light gray for received messages */
+  }
+  
+  .message-content {
+    position: relative;
+    padding: 10px;
+  }
+  
+  .message-timestamp {
+    font-size: 0.75em;
+    color: #888;
+    position: absolute;
+    bottom: 5px;
+    right: 10px;
+  }
+  
+  .card-footer {
+    position: relative; /* Ensure footer sticks to bottom of card */
+    width: 100%;
+    padding: 10px;
+    background-color: #fff;
+  }
+  
+  .input-group {
+    display: flex;
+    align-items: center;
+  }
+  
