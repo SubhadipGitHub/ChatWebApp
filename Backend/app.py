@@ -1,96 +1,74 @@
-from fastapi import FastAPI, Depends, HTTPException, status
-from models import UserModel, ChatModel
-from auth import authenticate_user
+from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel
 from typing import List
+from auth import create_user, authenticate_user,get_user_by_id, hash_password, verify_password,authenticate_user
+from db import chat_collection,user_collection
+from models import Chat, Message, User
+from bson.objectid import ObjectId
+from datetime import datetime
 
 app = FastAPI()
 
-# Request/Response Models
-class RegisterRequest(BaseModel):
-    username: str
-    email: str
-    password: str
-
-# Request Models
-class MessageRequest(BaseModel):
-    chat_id: str = None  # Optional: chat_id will be checked, or a new one created
-    receiver_id: str     # Receiver's username
-    content: str
-
-class MessageResponse(BaseModel):
-    sender: str
-    content: str
-
-# Registration Route
+# User registration
 @app.post("/register")
-def register_user(request: RegisterRequest):
-    # Step 1: Check if the username already exists (now checking the _id field)
-    existing_username = UserModel.get_user_by_id(request.username)
-    if existing_username:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already exists")
-
-    # Step 2: Check if the email already exists
-    existing_email = UserModel.get_user_by_email(request.email)
-    if existing_email:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already exists")
-
-    # Step 3: Create the user with username stored in the _id field
-    UserModel.create_user(user_id=request.username, email=request.email, password=request.password)
+async def register_user(user: User):
+    existing_user = await user_collection.find_one({"username": user.username})
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Username already registered")
     
-    return {"msg": "User registered successfully", "user_id": request.username}
+    hashed_password = hash_password(user.password)
+    user_data = {
+        "email": user.email,
+        "username": user.username,
+        "password": hashed_password
+    }
+    result = await user_collection.insert_one(user_data)
+    return {"user_id": str(result.inserted_id), "message": "User registered successfully"}
 
-# Send Message Route (Authenticated)
-@app.post("/send_message")
-def send_message(request: MessageRequest, username: str = Depends(authenticate_user)):
-    # Step 1: Check if receiver_id exists (receiver_id refers to the _id of the user)
-    receiver = UserModel.get_user_by_id(request.receiver_id)
-    if receiver is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Receiver not found")
-
-    # Step 2: Check if chat_id was provided
-    if request.chat_id:
-        chat = ChatModel.get_chat(request.chat_id)
-        if chat is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chat not found")
-        # Ensure both participants are part of the chat
-        if username not in chat["participants"] or request.receiver_id not in chat["participants"]:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not a participant in this chat")
-    else:
-        # Step 3: No chat_id provided, check if a chat exists between the two users
-        existing_chat = ChatModel.collection.find_one({
-            "participants": {"$all": [username, request.receiver_id]}
-        })
-        
-        if existing_chat:
-            chat = existing_chat
-        else:
-            # Step 4: Create new chat if none exists
-            new_chat = {
-                "participants": [username, request.receiver_id],
-                "messages": []
-            }
-            chat_id = ChatModel.collection.insert_one(new_chat).inserted_id
-            chat = ChatModel.get_chat(str(chat_id))
-
-    # Step 5: Add message to the chat
-    ChatModel.add_message(str(chat["_id"]), sender=username, content=request.content)
-    return {"msg": "Message sent"}
+# User login
+@app.post("/login")
+async def login_user(username: str, password: str):
+    user = await user_collection.find_one({"username": username})
+    if not user or not verify_password(password, user["password"]):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    return {"message": "User logged successfully"}
 
 
-# Retrieve Messages Route (Authenticated)
-@app.get("/chats/{chat_id}/messages", response_model=List[MessageResponse])
-def get_messages(chat_id: str, username: str = Depends(authenticate_user)):
-    chat = ChatModel.get_chat(chat_id)
-    if chat is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chat not found")
+@app.post("/chats/")
+async def create_chat(participants: List[str], username: str = Depends(authenticate_user)):
+    chat_data = {"participants": participants, "created_at": datetime.utcnow()}
+    new_chat = await chat_collection.insert_one(chat_data)
+    return {"chat_id": str(new_chat.inserted_id)}
 
-    if username not in chat["participants"]:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not a participant in this chat")
-    
-    return chat["messages"]
+# Send a message in a chat
+@app.post("/chats/{chat_id}/messages")
+async def send_message(chat_id: str, message: Message):
+    chat = await chat_collection.find_one({"_id": ObjectId(chat_id)})
+    if not chat:
+        raise HTTPException(status_code=404, detail="Chat not found")
 
-# FastAPI root route
-@app.get("/")
-def read_root():
-    return {"msg": "Welcome to the FastAPI chat app!"}
+    message_data = message.dict()
+    message_data["timestamp"] = datetime.utcnow()
+
+    await chat_collection.update_one(
+        {"_id": ObjectId(chat_id)},
+        {"$push": {"messages": message_data}}
+    )
+    return {"message": "Message sent"}
+
+# Fetch messages from a chat (with pagination)
+@app.get("/chats/{chat_id}/messages")
+async def get_chat_messages(chat_id: str, skip: int = 0, limit: int = 10):
+    chat = await chat_collection.find_one({"_id": ObjectId(chat_id)})
+    if not chat:
+        raise HTTPException(status_code=404, detail="Chat not found")
+
+    messages = chat.get("messages", [])[skip:skip + limit]
+    return {"messages": messages}
+
+# Fetch list of chats for a user
+@app.get("/chats")
+async def get_user_chats(user_id: str):
+    chats = await chat_collection.find({"participants": user_id})
+    print(chats)
+    return {"chats": chats}
