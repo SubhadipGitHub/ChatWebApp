@@ -12,6 +12,12 @@ const ChatDetail = ({ chat }) => {
 
   return (
     <div className="chat-detail-container d-flex flex-column flex-grow-3">
+      {/* Chat header displaying participant or group name */}
+      <div className="chat-header p-3 bg-light border-bottom">
+        <h5 className="mb-0">{chat.name}</h5>
+      </div>
+
+      {/* Chat messages section */}
       <div className="chat-messages flex-grow-1 overflow-auto p-3">
         {chat.messages.map((msg, index) => (
           <div
@@ -25,6 +31,8 @@ const ChatDetail = ({ chat }) => {
           </div>
         ))}
       </div>
+
+      {/* Chat input section */}
       <div className="chat-input p-3">
         <input
           type="text"

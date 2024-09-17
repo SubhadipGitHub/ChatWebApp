@@ -11,6 +11,11 @@
     flex-direction: column;
     overflow: hidden;
   }
+
+  .chat-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #ddd;
+  }
   
   .chat-body {
     flex: 1; /* Allows the chat body to expand and take up available space */
@@ -50,8 +55,8 @@
   }
   
   .message-timestamp {
-    font-size: 0.75em;
-    color: #888;
+    font-size: 0.5em;
+    color: blue;
     position: absolute;
     bottom: 5px;
     right: 10px;

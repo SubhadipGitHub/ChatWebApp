@@ -15,7 +15,7 @@ const ChatPage = () => {
         const response = [
           {
             id: 'chat1',
-            name: 'Chat with Alice',
+            name: 'Alice',
             messages: [
               { sender: 'user1', content: 'Hello Alice!', time: '10:00 AM' },
               { sender: 'alice', content: 'Hi there!', time: '10:01 AM' },
@@ -23,7 +23,7 @@ const ChatPage = () => {
           },
           {
             id: 'chat2',
-            name: 'Chat with Bob',
+            name: 'Bob',
             messages: [
               { sender: 'user1', content: 'Hey Bob, how are you?', time: '10:05 AM' },
               { sender: 'bob', content: 'I’m good, thanks!', time: '10:06 AM' },
@@ -43,9 +43,14 @@ const ChatPage = () => {
     setSelectedChat(chat); // Update selected chat
   };
 
+  const loggedInUser = {
+    name: 'John Doe',
+  };
+  
+  
   return (
     <div className="chat-page-container d-flex">
-      <ChatList chats={chats} onChatSelect={handleChatSelect} />
+      <ChatList chats={chats} onChatSelect={handleChatSelect} loggedInUser={loggedInUser} />
       {selectedChat && <ChatDetail chat={selectedChat} />} {/* Render ChatDetail if a chat is selected */}
     </div>
   );

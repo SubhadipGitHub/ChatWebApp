@@ -22,3 +22,37 @@
     color: #6c757d; /* Icon color */
   }
   
+  .chat-header {
+    font-weight: bold;
+    font-size: 1.25rem;
+  }
+  
+  .user-profile-section {
+    background-color: #f8f9fa;
+    border-top: 1px solid #ddd;
+  }
+  
+  .user-profile-section .fa-cog {
+    font-size: 1.5rem;
+    color: #007bff;
+  }
+  
+  .modal.fade.show {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1050;
+    overflow: hidden;
+  }
+  
+  .modal-dialog {
+    margin: 1.75rem auto;
+  }
+  
+  .modal-content {
+    padding: 20px;
+  }
+  
+  
