@@ -9,10 +9,9 @@ const Login = () => {
   const handleLogin = async () => {
     // Call the FastAPI backend to authenticate
     // Assuming you have an api.js function to handle login
-    const response = await fetch('http://localhost:8000/login', {
+    const response = await fetch(`http://localhost:8000/login?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
+      headers: { 'Content-Type': 'application/json' }
     });
     const data = await response.json();
     if (data.token) {

@@ -1,4 +1,5 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, status
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
 from auth import create_user, authenticate_user,get_user_by_id, hash_password, verify_password,authenticate_user
@@ -8,6 +9,21 @@ from bson.objectid import ObjectId
 from datetime import datetime
 
 app = FastAPI()
+
+# Allowing CORS for specific origins (for your frontend on localhost:3000)
+origins = [
+    "http://localhost:3000",
+    # You can add more origins here if needed
+]
+
+# Add the CORSMiddleware to allow requests from specific origins
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,  # Allow requests from the frontend
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all HTTP methods (GET, POST, etc.)
+    allow_headers=["*"],  # Allow all headers (Authorization, Content-Type, etc.)
+)
 
 # User registration
 @app.post("/register")
@@ -25,14 +41,26 @@ async def register_user(user: User):
     result = await user_collection.insert_one(user_data)
     return {"user_id": str(result.inserted_id), "message": "User registered successfully"}
 
-# User login
+# Endpoint for login using query parameters
 @app.post("/login")
 async def login_user(username: str, password: str):
+    # Fetch user from the MongoDB collection
     user = await user_collection.find_one({"username": username})
-    if not user or not verify_password(password, user["password"]):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-    return {"message": "User logged successfully"}
 
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid username or password",
+        )
+
+    # Verify password using bcrypt
+    if not verify_password(password, user['password']):  # Assuming user['password'] is hashed
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid username or password",
+        )
+
+    return {"message": "User logged successfully"}
 
 @app.post("/chats/")
 async def create_chat(participants: List[str], username: str = Depends(authenticate_user)):

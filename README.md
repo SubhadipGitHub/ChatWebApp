@@ -120,3 +120,14 @@ To run this application, ensure that you have the following installed:
    ```bash
    git clone https://github.com/yourusername/chat-app
    cd chat-app
+
+### Run the Backend
+
+`cd Backend`
+`uvicorn app:app --reload`
+
+#### Run the Frontend
+
+`cd Frontend`
+`cd chat-app`
+`npm start`
