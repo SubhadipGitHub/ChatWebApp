@@ -33,13 +33,24 @@ async def register_user(user: User):
         raise HTTPException(status_code=400, detail="Username already registered")
     
     hashed_password = hash_password(user.password)
+    
+    # Add creation_date and gender
     user_data = {
         "email": user.email,
         "username": user.username,
-        "password": hashed_password
+        "password": hashed_password,
+        "gender": user.gender,  # Assuming gender is a field in the User model
+        "creation_date": datetime.utcnow()  # Stores the current date and time in UTC
     }
+    
     result = await user_collection.insert_one(user_data)
-    return {"user_id": str(result.inserted_id), "message": "User registered successfully"}
+    
+    return {
+        "user_id": str(result.inserted_id),
+        "user":user.username,
+        "message": "User registered successfully",
+        "status": "success"
+    }
 
 # Endpoint for login using query parameters
 @app.post("/login")
@@ -60,7 +71,7 @@ async def login_user(username: str, password: str):
             detail="Invalid username or password",
         )
 
-    return {"message": "User logged successfully"}
+    return {"message": "User logged successfully","status":"success","user":{"name":username,"profileImage":"https://vectorified.com/images/avatar-icon-png-24.png"}}
 
 @app.post("/chats/")
 async def create_chat(participants: List[str], username: str = Depends(authenticate_user)):

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // For redirecting
+import { useNavigate, Link } from 'react-router-dom'; // For redirecting and linking to register page
+import { toast,ToastContainer  } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -8,42 +10,57 @@ const Login = () => {
 
   const handleLogin = async () => {
     // Call the FastAPI backend to authenticate
-    // Assuming you have an api.js function to handle login
     const response = await fetch(`http://localhost:8000/login?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }
     });
     const data = await response.json();
-    if (data.token) {
-      localStorage.setItem('token', data.token);
+    if (data.status === 'success') {
+      localStorage.setItem('token', 'test');
+      localStorage.setItem('user', JSON.stringify(data.user)); // Store user info
       navigate('/chat'); // Redirect to chat on successful login
     } else {
-      alert('Invalid login');
+      toast.error('Invalid login');
     }
   };
 
   return (
     <div className="container d-flex justify-content-center mt-5">
-      <div className="card p-4">
-        <h2 className="card-title text-center">Login</h2>
-        <input
-          type="text"
-          className="form-control my-2"
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
-        <input
-          type="password"
-          className="form-control my-2"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        <button className="btn btn-primary" onClick={handleLogin}>
+      <div className="card shadow-lg p-4" style={{ width: '400px' }}>
+        <h2 className="card-title text-center mb-4">Welcome Back</h2>
+        
+        <div className="mb-3">
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
+        </div>
+
+        <div className="mb-3">
+          <input
+            type="password"
+            className="form-control"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
+
+        <button className="btn btn-primary w-100 mb-3" onClick={handleLogin}>
           Login
         </button>
+
+        <div className="text-center">
+          <p className="mb-0">Don't have an account?</p>
+          <Link to="/register" className="text-decoration-none">Register here</Link>
+        </div>
       </div>
+
+      {/* Add the ToastContainer at the end */}
+      <ToastContainer />
     </div>
   );
 };

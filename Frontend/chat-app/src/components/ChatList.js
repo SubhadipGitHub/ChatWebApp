@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import '@fortawesome/fontawesome-free/css/all.min.css'; // Import FontAwesome CSS
 import './ChatList.css'; // Import custom CSS
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const ChatList = ({ chats, onChatSelect, loggedInUser, onLogout, onAddChat }) => {
   const [showUserModal, setShowUserModal] = useState(false); // Modal for logged-in user
@@ -15,12 +17,27 @@ const ChatList = ({ chats, onChatSelect, loggedInUser, onLogout, onAddChat }) =>
   const handleShowChatModal = (index) => setShowChatModal(index);
   const handleCloseChatModal = () => setShowChatModal(null);
 
-  // Function to handle logout
   const handleLogout = () => {
-    if (onLogout) {
-      onLogout();
-    }
-  };
+    // Clear local storage
+    localStorage.clear();
+  
+    // Show a success toast
+    toast.success('Logged out successfully!', {
+      position: "top-right",
+      autoClose: 2000, // Close after 2 seconds
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+    });
+  
+    // Redirect to login after a short delay
+    setTimeout(() => {
+      window.location.reload();  // Refresh the page to reset state completely
+      window.location.href = '/login'; // Replace with your login route
+    }, 2000); // Wait 2 seconds to show toast before redirect
+  };  
 
   // Filter chats based on search query
   const filteredChats = chats.filter(chat =>

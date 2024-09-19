@@ -7,7 +7,8 @@ import Register from './components/Register';
 // Mock authentication check function
 const isAuthenticated = () => {
   // This could be a call to your authentication service
-  return localStorage.getItem('authToken') !== null;
+  console.log(localStorage.getItem('token'))
+  return localStorage.getItem('token') !== null;
 };
 
 function App() {
