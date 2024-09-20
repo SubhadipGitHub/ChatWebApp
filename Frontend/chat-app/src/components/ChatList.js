@@ -8,6 +8,8 @@ const ChatList = ({ chats, onChatSelect, loggedInUser, onLogout, onAddChat }) =>
   const [showUserModal, setShowUserModal] = useState(false); // Modal for logged-in user
   const [showChatModal, setShowChatModal] = useState(null); // Modal for chat details
   const [searchQuery, setSearchQuery] = useState(''); // State for search query
+  const [showAddChatModal, setShowAddChatModal] = useState(false); // Modal for adding a chat
+  const [newChatName, setNewChatName] = useState(''); // State for new chat name
 
   // Function to handle modal open/close for logged-in user
   const handleShowUserModal = () => setShowUserModal(true);
@@ -17,27 +19,35 @@ const ChatList = ({ chats, onChatSelect, loggedInUser, onLogout, onAddChat }) =>
   const handleShowChatModal = (index) => setShowChatModal(index);
   const handleCloseChatModal = () => setShowChatModal(null);
 
+  // Function to handle the 'Add Chat' modal
+  const handleShowAddChatModal = () => setShowAddChatModal(true);
+  const handleCloseAddChatModal = () => setShowAddChatModal(false);
+
   const handleLogout = () => {
-    // Clear local storage
     localStorage.clear();
-  
-    // Show a success toast
     toast.success('Logged out successfully!', {
       position: "top-right",
-      autoClose: 2000, // Close after 2 seconds
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
+      autoClose: 2000,
     });
-  
-    // Redirect to login after a short delay
     setTimeout(() => {
-      window.location.reload();  // Refresh the page to reset state completely
-      window.location.href = '/login'; // Replace with your login route
-    }, 2000); // Wait 2 seconds to show toast before redirect
-  };  
+      window.location.reload();
+      window.location.href = '/login';
+    }, 2000);
+  };
+
+  // Function to handle adding a new chat
+  const handleAddChat = () => {
+    if (newChatName.trim()) {
+      onAddChat(newChatName);  // Call the parent function to add the chat
+      setNewChatName(''); // Clear the input field
+      handleCloseAddChatModal(); // Close the modal
+    } else {
+      toast.error('Chat name cannot be empty!', {
+        position: 'top-right',
+        autoClose: 2000,
+      });
+    }
+  };
 
   // Filter chats based on search query
   const filteredChats = chats.filter(chat =>
@@ -50,7 +60,7 @@ const ChatList = ({ chats, onChatSelect, loggedInUser, onLogout, onAddChat }) =>
       <div className="chat-header mb-3 d-flex justify-content-between align-items-center p-2">
         <h5>Chats</h5>
         {/* Add Chat Button */}
-        <button className="btn btn-primary" onClick={onAddChat}>
+        <button className="btn btn-primary" onClick={handleShowAddChatModal}>
           <i className="fas fa-plus"></i> Add Chat
         </button>
       </div>
@@ -96,7 +106,12 @@ const ChatList = ({ chats, onChatSelect, loggedInUser, onLogout, onAddChat }) =>
       <div className="user-profile-section mt-3">
         <div className="d-flex align-items-center justify-content-between p-2">
           <div className="d-flex align-items-center" onClick={handleShowUserModal}>
-            <i className="fas fa-user-circle fa-2x text-primary me-2"></i>
+          <img
+        src={loggedInUser.profileImage} // Use loggedInUser.image for user1 and chat.image for others
+        alt={loggedInUser.name}
+        className="rounded-circle me-2"
+        style={{ width: '40px', height: '40px' }}
+      />
             <span>{loggedInUser.name}</span>
           </div>
           <button className="btn btn-danger" onClick={handleLogout}>
@@ -104,6 +119,44 @@ const ChatList = ({ chats, onChatSelect, loggedInUser, onLogout, onAddChat }) =>
           </button>
         </div>
       </div>
+
+      {/* Modal for adding a new chat */}
+      {showAddChatModal && (
+        <div
+          className="modal fade show"
+          style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}
+        >
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Add New Chat</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={handleCloseAddChatModal}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Enter chat name"
+                  value={newChatName}
+                  onChange={(e) => setNewChatName(e.target.value)}
+                />
+              </div>
+              <div className="modal-footer">
+                <button className="btn btn-secondary" onClick={handleCloseAddChatModal}>
+                  Close
+                </button>
+                <button className="btn btn-primary" onClick={handleAddChat}>
+                  Add Chat
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal for logged-in user */}
       {showUserModal && (
@@ -122,7 +175,6 @@ const ChatList = ({ chats, onChatSelect, loggedInUser, onLogout, onAddChat }) =>
                 ></button>
               </div>
               <div className="modal-body text-center">
-                {/* User profile image */}
                 <img
                   src={loggedInUser.profileImage || 'https://via.placeholder.com/150'}
                   alt="User Profile"
@@ -167,15 +219,15 @@ const ChatList = ({ chats, onChatSelect, loggedInUser, onLogout, onAddChat }) =>
                   ></button>
                 </div>
                 <div className="modal-body text-center">
-                  {/* Chat user profile image */}
                   <img
                     src={'https://via.placeholder.com/150'}  // Placeholder image for chat user
                     alt="Chat User"
                     className="rounded-circle mb-3"
                     style={{ width: '100px', height: '100px', objectFit: 'cover' }}
                   />
-                  <p><strong>Chat Name:</strong> {chat.name}</p>
-                  <p><strong>Chat Started At:</strong> {chat.startedAt || 'Unknown'}</p> {/* Dummy data */}
+                  <p><strong>Name:</strong> {chat.name}</p>
+                  <p><strong>Last Message:</strong> {chat.latestMessage}</p>
+                  <p><strong>Participants:</strong> {chat.participants.join(', ')}</p>
                 </div>
                 <div className="modal-footer">
                   <button

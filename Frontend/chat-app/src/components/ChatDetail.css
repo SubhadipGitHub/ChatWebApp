@@ -11,11 +11,6 @@
     flex-direction: column;
     overflow: hidden;
   }
-
-  .chat-header {
-    background-color: #f8f9fa;
-    border-bottom: 1px solid #ddd;
-  }
   
   .chat-body {
     flex: 1; /* Allows the chat body to expand and take up available space */
@@ -31,36 +26,51 @@
     margin-bottom: 60px; /* Space for input area */
   }
   
+  .chat-detail-container {
+    background-color: #f8f9fa; /* Light background for the chat area */
+    border-radius: 8px; /* Rounded corners */
+  }
+  
+  
+  
   .message {
     display: flex;
-    align-items: center;
-    margin: 5px;
-    max-width: 75%;
-    padding: 5px;
-    border-radius: 10px;
+    align-items: flex-start;
+    margin-bottom: 15px; /* Spacing between messages */
   }
   
   .message-sent {
-    margin-left: auto;
-    background-color: #e1ffc7; /* Light green for sent messages */
+    justify-content: flex-end; /* Align sent messages to the right */
   }
   
   .message-received {
-    background-color: #f1f0f0; /* Light gray for received messages */
+    justify-content: flex-start; /* Align received messages to the left */
   }
   
   .message-content {
-    position: relative;
-    padding: 10px;
+    background-color: #e2e3e5; /* Background color for messages */
+    border-radius: 20px; /* Rounded corners for messages */
+    padding: 10px 15px; /* Padding for messages */
+    max-width: 70%; /* Limit width of messages */
+    word-wrap: break-word; /* Wrap long words */
   }
   
-  .message-timestamp {
-    font-size: 0.5em;
-    color: blue;
-    position: absolute;
-    bottom: 5px;
-    right: 10px;
+  .message-sent .message-content {
+    background-color: lightgreen; /* Sent message color */
+    color: white; /* Text color for sent messages */
   }
+  
+  .message-received .message-content {
+    background-color: #e2e3e5; /* Color for received messages */
+    color: black; /* Text color for received messages */
+  }
+  
+  .message-time {
+    font-size: 0.8em; /* Smaller font size for message time */
+    color: #6c757d; /* Gray color for time */
+    margin-left: 10px; /* Space between message and time */
+  }
+  
   
   .card-footer {
     position: relative; /* Ensure footer sticks to bottom of card */
@@ -73,4 +83,21 @@
     display: flex;
     align-items: center;
   }
+
+  .chat-input {
+    display: flex;
+    align-items: center;
+  }
   
+  .emoji-picker-container {
+    position: absolute;
+    bottom: 80px;
+    right: 20px;
+    background-color: transparent;
+  }
+
+  .emoji-picker-button {
+    background-color: transparent;
+    border-radius: 20px; /* Rounded corners for messages */
+    border: #6c757d;
+  }
