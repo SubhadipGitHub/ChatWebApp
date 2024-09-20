@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom'; // For redirecting and linking to register page
+import { Link } from 'react-router-dom'; // For redirecting and linking to register page
 import { toast,ToastContainer  } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const navigate = useNavigate();
 
   const handleLogin = async () => {
+    // Clear local storage
+    localStorage.clear();
     // Call the FastAPI backend to authenticate
     const response = await fetch(`http://localhost:8000/login?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`, {
       method: 'POST',
@@ -18,7 +19,11 @@ const Login = () => {
     if (data.status === 'success') {
       localStorage.setItem('token', 'test');
       localStorage.setItem('user', JSON.stringify(data.user)); // Store user info
-      navigate('/chat'); // Redirect to chat on successful login
+      toast.success('Login successfull');
+      // Redirect to login after a short delay
+      setTimeout(() => {
+        window.location.href = '/chat'; // Replace with your login route
+      }, 2000); // Wait 2 seconds to show toast before redirect
     } else {
       toast.error('Invalid login');
     }
