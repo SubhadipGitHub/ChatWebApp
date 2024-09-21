@@ -1,61 +1,115 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { io } from 'socket.io-client';
 import EmojiPicker from 'emoji-picker-react'; // Emoji Picker library
 import './ChatDetail.css'; // Import custom CSS
 
-const ChatDetail = ({ chat , loggedInUser}) => {
+// Create the socket connection outside of the component to avoid re-connection
+const socket = io("http://localhost:8000", {
+  path: "/socket.io/", // Ensure the correct Socket.IO path is used
+  transports: ['websocket'], // WebSocket transport
+});
+
+const ChatDetail = ({ chatId, chatName, chatimage, loggedInUser }) => {
   const [message, setMessage] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false); // State to show/hide emoji picker
+  const [messages, setMessages] = useState([]); // State for chat messages
 
-  const handleSendMessage = async () => {
-    console.log('Sending message:', message);
-    setMessage(''); // Clear input field after sending
+  useEffect(() => {
+    // Join the chat room
+    socket.emit('joinChat', { chatId, username: loggedInUser.username });
+
+    // Fetch existing messages
+    const fetchMessages = async () => {
+      try {
+        const response = await fetch(`http://localhost:8000/chats/${chatId}/messages`, {
+          method: 'GET',
+          headers: {
+            'Authorization': 'Basic ' + btoa(`${loggedInUser.username}:${loggedInUser.password}`), // Adjust as necessary
+          },
+        });
+
+        if (!response.ok) throw new Error('Failed to fetch messages');
+        const data = await response.json();
+        setMessages(data.messages);
+      } catch (error) {
+        console.error('Error fetching messages:', error);
+      }
+    };
+
+    fetchMessages();
+
+    // Listen for new messages
+    const handleNewMessage = (msg) => {
+      console.log(msg);
+      if (msg.chat_id === chatId) {
+        setMessages((prevMessages) => [...prevMessages, msg]);
+      }
+    };
+
+    socket.on("new_message", handleNewMessage);
+
+    // Clean up: remove event listener when component unmounts or chatId changes
+    return () => {
+      socket.off("new_message", handleNewMessage);
+    };
+  }, [chatId, loggedInUser.username, loggedInUser.password]); // Dependencies to ensure effect runs correctly
+
+  // Send a message to the specific room
+  const sendMessage = () => {
+    if (message.trim()) {
+      const messageData = {
+        chat_id: chatId,
+        text: message,
+        sender: loggedInUser.username,
+      };
+
+      socket.emit("message", messageData);
+      setMessage(''); // Clear input after sending
+    }
   };
 
   const handleEmojiClick = (emojiObject) => {
-    console.log("Selected Emoji Object:", emojiObject);
-    // Correctly append the emoji to the message
     setMessage((prevMessage) => prevMessage + emojiObject.emoji);
   };
 
   return (
     <div className="chat-detail-container d-flex flex-column flex-grow-3">
-      {/* Chat header with participant/group name and image */}
+      {/* Chat header */}
       <div className="chat-header p-3 bg-light border-bottom d-flex align-items-center">
         <img
-          src={chat.image || 'https://via.placeholder.com/50'}
+          src={chatimage || 'https://via.placeholder.com/50'} // Display chat image or placeholder
           alt="Chat"
           className="rounded-circle me-3"
           style={{ width: '50px', height: '50px' }}
         />
-        <h5 className="mb-0">{chat.name}</h5>
+        <h5 className="mb-0">{chatName}</h5>
       </div>
 
       {/* Chat messages section */}
-<div className="chat-messages flex-grow-1 overflow-auto p-3">
-  {chat.messages.map((msg, index) => (
-    <div
-      key={index}
-      className={`message ${msg.sender === 'user1' ? 'message-sent' : 'message-received'} d-flex`}
-    >
-      {/* Message sender's image */}
-      <img
-        src={msg.sender === 'user1' ? loggedInUser.profileImage : chat.image} // Use loggedInUser.image for user1 and chat.image for others
-        alt={msg.sender}
-        className="rounded-circle me-2"
-        style={{ width: '40px', height: '40px' }}
-      />
-      <div className="message-content">
-        <p>{msg.content}</p>
-        <span className="message-time">{msg.time}</span>
+      <div className="chat-messages flex-grow-1 overflow-auto p-3">
+        {messages.map((msg, index) => (
+          <div
+            key={index}
+            className={`message ${msg.sender === loggedInUser.username ? 'message-sent' : 'message-received'} d-flex`}
+          >
+            <img
+              src={msg.sender === loggedInUser.username ? loggedInUser.profileImage : chatimage} // Use user image for logged-in user
+              alt={msg.sender}
+              className="rounded-circle me-2"
+              style={{ width: '40px', height: '40px' }}
+            />
+            <div className="message-content">
+              <p>{msg.content}</p>
+              <span className="message-time">{msg.time}</span>
+            </div>
+          </div>
+        ))}
       </div>
-    </div>
-  ))}
-</div>
 
       {/* Chat input section */}
       <div className="chat-input p-3 d-flex align-items-center">
         <button
-          className="btn emoji-picker-button"   onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+          className="btn emoji-picker-button" onClick={() => setShowEmojiPicker(!showEmojiPicker)}
         >
           😀
         </button>
@@ -66,7 +120,7 @@ const ChatDetail = ({ chat , loggedInUser}) => {
           onChange={(e) => setMessage(e.target.value)}
           placeholder="Type a message"
         />
-        <button className="btn btn-success ms-2" onClick={handleSendMessage}>
+        <button className="btn btn-success ms-2" onClick={sendMessage}>
           Send
         </button>
       </div>

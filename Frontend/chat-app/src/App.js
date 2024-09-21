@@ -17,6 +17,7 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/" element={<Navigate to="/chat" />} /> {/* Redirect from root to /chat */}
         {/* Protecting the chat route */}
         <Route
           path="/chat"

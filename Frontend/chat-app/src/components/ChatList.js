@@ -35,12 +35,59 @@ const ChatList = ({ chats, onChatSelect, loggedInUser, onLogout, onAddChat }) =>
     }, 2000);
   };
 
-  // Function to handle adding a new chat
-  const handleAddChat = () => {
+  const handleAddChat = async () => {
     if (newChatName.trim()) {
-      onAddChat(newChatName);  // Call the parent function to add the chat
-      setNewChatName(''); // Clear the input field
-      handleCloseAddChatModal(); // Close the modal
+      try {
+        const username = localStorage.getItem('username'); // Get username from local storage
+        const password = localStorage.getItem('password'); // Get password from local storage
+  
+        // Customizable base URI
+        const baseURI = 'http://localhost:8000'; // You can change this as needed
+        const endpoint = `${baseURI}/chats/`; // Complete endpoint
+  
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Basic ' + btoa(`${username}:${password}`) // Basic auth
+          },
+          body: JSON.stringify({
+            participants: [newChatName] // Add the participants as needed
+          }),
+        });
+  
+        if (!response.ok) {
+          // Handle different error cases based on status code
+          const errorData = await response.json();
+          let errorMessage = 'Failed to create chat.';
+  
+          if (response.status === 400) {
+            errorMessage = errorData.detail || 'Chat with the same participants already exists.';
+          } else if (response.status === 404) {
+            errorMessage = errorData.detail || 'One or more participants do not exist.';
+          } else if (response.status === 500) {
+            errorMessage = 'Internal server error. Please try again later.';
+          }
+  
+          throw new Error(errorMessage);
+        }
+  
+        const data = await response.json();
+        console.log('New chat created with ID:', data.chat_id);
+        // onAddChat(newChatName); // Call the parent function to add the chat
+        setNewChatName(''); // Clear the input field
+        handleCloseAddChatModal(); // Close the modal
+        toast.success('Chat added successfully!', {
+          position: 'top-right',
+          autoClose: 2000,
+        });
+      } catch (error) {
+        console.error('Error creating chat:', error);
+        toast.error(error.message, {
+          position: 'top-right',
+          autoClose: 2000,
+        });
+      }
     } else {
       toast.error('Chat name cannot be empty!', {
         position: 'top-right',
@@ -48,6 +95,7 @@ const ChatList = ({ chats, onChatSelect, loggedInUser, onLogout, onAddChat }) =>
       });
     }
   };
+  
 
   // Filter chats based on search query
   const filteredChats = chats.filter(chat =>

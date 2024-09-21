@@ -19,6 +19,8 @@ const Login = () => {
     if (data.status === 'success') {
       localStorage.setItem('token', 'test');
       localStorage.setItem('user', JSON.stringify(data.user)); // Store user info
+      localStorage.setItem('username', username); // Store creds
+      localStorage.setItem('password', password); // Store creds
       toast.success('Login successfull');
       // Redirect to login after a short delay
       setTimeout(() => {

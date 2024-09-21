@@ -19,28 +19,34 @@ const ChatPage = () => {
     // Fetch chats from API when component mounts
     const fetchChats = async () => {
       try {
-        // Simulate API response with mock data
-        const response = [
-          {
-            id: 'chat1',
-            name: 'Alice',
-            image: 'https://ui-avatars.com/api/?name=Alice&background=random&color=fff&size=50', // Avatar for Alice
-            messages: [
-              { sender: 'user1', content: 'Hello Alice!', time: '10:00 AM' },
-              { sender: 'alice', content: 'Hi there!', time: '10:01 AM' },
-            ],
+        const username = localStorage.getItem('username'); // Get username from local storage
+        const password = localStorage.getItem('password'); // Get password from local storage
+
+        // Customizable base URI
+        const baseURI = 'http://localhost:8000'; // You can change this as needed
+        const endpoint = `${baseURI}/chats?user_id=${encodeURIComponent(username)}`; // Complete endpoint with user_id parameter
+
+        const response = await fetch(endpoint, {
+          method: 'GET',
+          headers: {
+            'Authorization': 'Basic ' + btoa(`${username}:${password}`) // Basic auth
           },
-          {
-            id: 'chat2',
-            name: 'Bob',
-            image: 'https://ui-avatars.com/api/?name=Bob&background=random&color=fff&size=50', // Avatar for Bob
-            messages: [
-              { sender: 'user1', content: 'Hey Bob, how are you?', time: '10:05 AM' },
-              { sender: 'bob', content: 'I’m good, thanks!', time: '10:06 AM' },
-            ],
-          },
-        ];
-        setChats(response); // Directly set mock data
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch chats');
+        }
+
+        const data = await response.json();
+        // Assuming data.chats is an array of chat objects
+        const formattedChats = data.map(chat => ({
+          id: chat._id,
+          name: chat.name,
+          image: chat.image, // Assuming you include an image field in your chat data
+          messages: chat.messages || [], // Include messages if available
+        }));
+
+        setChats(formattedChats); // Set the fetched chats
       } catch (error) {
         console.error('Error fetching chats:', error);
       }
@@ -56,8 +62,8 @@ const ChatPage = () => {
   return (
     <div className="chat-page-container d-flex">
       <ChatList chats={chats} onChatSelect={handleChatSelect} loggedInUser={loggedInUser} />
-      {selectedChat && <ChatDetail chat={selectedChat} loggedInUser={loggedInUser}/>} {/* Render ChatDetail if a chat is selected */}
-      
+      {selectedChat && <ChatDetail chatId={selectedChat.id} chatimage={selectedChat.image} chatName={selectedChat.name} loggedInUser={loggedInUser} />} {/* Pass chatId and chatName */} 
+
       {/* Add the ToastContainer at the end */}
       <ToastContainer />
     </div>

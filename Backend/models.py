@@ -1,6 +1,9 @@
 from pydantic import BaseModel
 from typing import List,Optional
 
+class ChatCreate(BaseModel):
+    participants: List[str]
+
 class Chat(BaseModel):
     chat_id: str
     participants: List[str]

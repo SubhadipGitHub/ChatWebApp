@@ -1,29 +1,66 @@
-from fastapi import FastAPI, HTTPException, Depends, status
+from fastapi import FastAPI, HTTPException, Depends, status, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List
-from auth import create_user, authenticate_user,get_user_by_id, hash_password, verify_password,authenticate_user
-from db import chat_collection,user_collection
-from models import Chat, Message, User
+import socketio
+from typing import List, Optional
+from auth import create_user, authenticate_user, get_user_by_id, hash_password, verify_password
+from db import chat_collection, user_collection
+from models import Chat, Message, User,ChatCreate
 from bson.objectid import ObjectId
 from datetime import datetime
 
 app = FastAPI()
 
-# Allowing CORS for specific origins (for your frontend on localhost:3000)
 origins = [
-    "http://localhost:3000",
-    # You can add more origins here if needed
+    "http://localhost:3000"  # Frontend origin
 ]
 
-# Add the CORSMiddleware to allow requests from specific origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,  # Allow requests from the frontend
+    allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],  # Allow all HTTP methods (GET, POST, etc.)
-    allow_headers=["*"],  # Allow all headers (Authorization, Content-Type, etc.)
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
+
+
+# Socket.IO Server
+sio = socketio.AsyncServer(
+    async_mode='asgi',
+    cors_allowed_origins=["http://localhost:3000"]  # Allow frontend origin for WebSocket
+)
+app.mount("/socket.io/", socketio.ASGIApp(sio))
+
+# User registration, login, and other endpoints here (omitted for brevity)
+
+# Socket.IO Events
+
+# Join a specific chat room
+@sio.event
+async def join_room(sid, chat_id):
+    await sio.enter_room(sid, chat_id)  # Await the coroutine
+    print(f"User {sid} joined room {chat_id}")
+
+# Handle message sending to a specific room
+@sio.event
+async def message(sid, data):
+    print(data)
+    chat_id = data['chat_id']
+    message_data = {
+        'text': data['text'],
+        'sender': data['sender'],
+        'timestamp': datetime.utcnow().isoformat()  # Convert to ISO string
+    }
+
+    # Save message in MongoDB
+    await chat_collection.update_one(
+        {"_id": chat_id},
+        {"$push": {"messages": message_data}}
+    )
+
+    message_data['chat_id']=chat_id
+    # Emit the message to everyone in the room
+    await sio.emit("new_message", message_data, room=chat_id)
 
 # User registration
 @app.post("/register")
@@ -34,20 +71,19 @@ async def register_user(user: User):
     
     hashed_password = hash_password(user.password)
     
-    # Add creation_date and gender
     user_data = {
         "email": user.email,
         "username": user.username,
         "password": hashed_password,
-        "gender": user.gender,  # Assuming gender is a field in the User model
-        "creation_date": datetime.utcnow()  # Stores the current date and time in UTC
+        "gender": user.gender,
+        "creation_date": datetime.utcnow()
     }
     
     result = await user_collection.insert_one(user_data)
     
     return {
         "user_id": str(result.inserted_id),
-        "user":user.username,
+        "user": user.username,
         "message": "User registered successfully",
         "status": "success"
     }
@@ -55,7 +91,6 @@ async def register_user(user: User):
 # Endpoint for login using query parameters
 @app.post("/login")
 async def login_user(username: str, password: str):
-    # Fetch user from the MongoDB collection
     user = await user_collection.find_one({"username": username})
 
     if user is None:
@@ -64,50 +99,88 @@ async def login_user(username: str, password: str):
             detail="Invalid username or password",
         )
 
-    # Verify password using bcrypt
-    if not verify_password(password, user['password']):  # Assuming user['password'] is hashed
+    if not verify_password(password, user['password']):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid username or password",
         )
 
-    return {"message": "User logged successfully","status":"success","user":{"name":username,"profileImage":"https://vectorified.com/images/avatar-icon-png-24.png"}}
+    return {"message": "User logged successfully", "status": "success", "user": {"name": username, "profileImage": "https://vectorified.com/images/avatar-icon-png-24.png"}}
 
-@app.post("/chats/")
-async def create_chat(participants: List[str], username: str = Depends(authenticate_user)):
-    chat_data = {"participants": participants, "created_at": datetime.utcnow()}
+# Create a new chat
+@app.post("/chats/", response_model=dict, summary="Create a new chat")
+async def create_chat(chat: ChatCreate, username: str = Depends(authenticate_user)):
+    chat_id = str('_'.join(chat.participants))
+    
+    # Check if the chat with the same ID already exists
+    existing_chat = await chat_collection.find_one({"_id": chat_id})
+    if existing_chat:
+        raise HTTPException(status_code=400, detail="Chat with the same participants already exists.")
+
+    # Check if all participants exist in the user_collection
+    for participant in chat.participants:
+        user = await user_collection.find_one({"username": participant})
+        if not user:
+            raise HTTPException(status_code=404, detail=f"User '{participant}' does not exist.")
+
+    chat_name = str('-'.join(chat.participants))
+    chat_image = f'https://ui-avatars.com/api/?name={chat_name}&background=random&color=fff&size=50'
+    
+    chat_data = {
+        "_id": chat_id,
+        "name": chat_name,
+        "image": chat_image, 
+        "participants": chat.participants,
+        "created_at": datetime.utcnow(),
+        "created_by": username  # Add the created_by field
+    }
+    
     new_chat = await chat_collection.insert_one(chat_data)
     return {"chat_id": str(new_chat.inserted_id)}
 
-# Send a message in a chat
-@app.post("/chats/{chat_id}/messages")
-async def send_message(chat_id: str, message: Message):
-    chat = await chat_collection.find_one({"_id": ObjectId(chat_id)})
-    if not chat:
-        raise HTTPException(status_code=404, detail="Chat not found")
+# Handle message sending to a specific room
+@sio.event
+async def message(sid, data):
+    print(data)
+    chat_id = data['chat_id']
+    message_data = {
+        'content': data['text'],
+        'sender': data['sender'],
+        'time': datetime.utcnow().isoformat()  # Convert to ISO string
+    }
 
-    message_data = message.dict()
-    message_data["timestamp"] = datetime.utcnow()
-
+    # Save message in MongoDB
     await chat_collection.update_one(
-        {"_id": ObjectId(chat_id)},
+        {"_id": chat_id},
         {"$push": {"messages": message_data}}
     )
-    return {"message": "Message sent"}
 
-# Fetch messages from a chat (with pagination)
+    message_data['chat_id']=chat_id
+    # Emit the message to everyone in the room
+    await sio.emit("new_message", message_data, room=chat_id)
+
+# Fetch messages for a specific chat room (endpoint example)
 @app.get("/chats/{chat_id}/messages")
 async def get_chat_messages(chat_id: str, skip: int = 0, limit: int = 10):
-    chat = await chat_collection.find_one({"_id": ObjectId(chat_id)})
+    chat = await chat_collection.find_one({"_id": chat_id})
     if not chat:
         raise HTTPException(status_code=404, detail="Chat not found")
 
     messages = chat.get("messages", [])[skip:skip + limit]
     return {"messages": messages}
 
-# Fetch list of chats for a user
-@app.get("/chats")
-async def get_user_chats(user_id: str):
-    chats = await chat_collection.find({"participants": user_id})
+# Fetch list of chats for a user with pagination
+@app.get("/chats",  summary="Fetch chats for a user with pagination")
+async def get_user_chats(
+    user_id: str,
+    skip: Optional[int] = Query(0, ge=0),  # Default to 0, must be >= 0
+    limit: Optional[int] = Query(10, ge=1, le=100)  # Default to 10, must be between 1 and 100
+):
+    chats = await chat_collection.find({"created_by": user_id}).skip(skip).limit(limit).to_list(length=limit)
     print(chats)
-    return {"chats": chats}
+    return chats
+
+# Entry point for running the server
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
