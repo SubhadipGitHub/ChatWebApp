@@ -9,6 +9,9 @@ const socket = io("http://localhost:8000", {
   transports: ['websocket'], // WebSocket transport
 });
 
+const username = localStorage.getItem('username'); // Get username from local storage
+const password = localStorage.getItem('password'); // Get password from local storage
+
 const ChatDetail = ({ chatId, chatName, chatimage, loggedInUser }) => {
   const [message, setMessage] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false); // State to show/hide emoji picker
@@ -16,7 +19,7 @@ const ChatDetail = ({ chatId, chatName, chatimage, loggedInUser }) => {
 
   useEffect(() => {
     // Join the chat room
-    socket.emit('joinChat', { chatId, username: loggedInUser.username });
+    socket.emit('joinChat', { chatId, username: loggedInUser.name });
 
     // Fetch existing messages
     const fetchMessages = async () => {
@@ -24,7 +27,7 @@ const ChatDetail = ({ chatId, chatName, chatimage, loggedInUser }) => {
         const response = await fetch(`http://localhost:8000/chats/${chatId}/messages`, {
           method: 'GET',
           headers: {
-            'Authorization': 'Basic ' + btoa(`${loggedInUser.username}:${loggedInUser.password}`), // Adjust as necessary
+            'Authorization': 'Basic ' + btoa(`${username}:${password}`), // Adjust as necessary
           },
         });
 
@@ -37,6 +40,8 @@ const ChatDetail = ({ chatId, chatName, chatimage, loggedInUser }) => {
     };
 
     fetchMessages();
+
+    socket.emit("join_room", chatId);
 
     // Listen for new messages
     const handleNewMessage = (msg) => {
@@ -52,7 +57,7 @@ const ChatDetail = ({ chatId, chatName, chatimage, loggedInUser }) => {
     return () => {
       socket.off("new_message", handleNewMessage);
     };
-  }, [chatId, loggedInUser.username, loggedInUser.password]); // Dependencies to ensure effect runs correctly
+  }, [chatId, loggedInUser]); // Dependencies to ensure effect runs correctly
 
   // Send a message to the specific room
   const sendMessage = () => {
@@ -60,9 +65,10 @@ const ChatDetail = ({ chatId, chatName, chatimage, loggedInUser }) => {
       const messageData = {
         chat_id: chatId,
         text: message,
-        sender: loggedInUser.username,
+        sender: loggedInUser.name,
       };
-
+      //console.log(messageData)
+      //console.log('Logged in user:', loggedInUser);
       socket.emit("message", messageData);
       setMessage(''); // Clear input after sending
     }
@@ -90,17 +96,17 @@ const ChatDetail = ({ chatId, chatName, chatimage, loggedInUser }) => {
         {messages.map((msg, index) => (
           <div
             key={index}
-            className={`message ${msg.sender === loggedInUser.username ? 'message-sent' : 'message-received'} d-flex`}
+            className={`message ${msg.sender === loggedInUser.name ? 'message-sent' : 'message-received'} d-flex`}
           >
             <img
-              src={msg.sender === loggedInUser.username ? loggedInUser.profileImage : chatimage} // Use user image for logged-in user
+              src={msg.sender === loggedInUser.name ? loggedInUser.profileImage : chatimage} // Use user image for logged-in user
               alt={msg.sender}
               className="rounded-circle me-2"
               style={{ width: '40px', height: '40px' }}
             />
             <div className="message-content">
               <p>{msg.content}</p>
-              <span className="message-time">{msg.time}</span>
+              <span className="message-time">{new Date(msg.time).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })}</span>
             </div>
           </div>
         ))}

@@ -52,7 +52,7 @@ const ChatList = ({ chats, onChatSelect, loggedInUser, onLogout, onAddChat }) =>
             'Authorization': 'Basic ' + btoa(`${username}:${password}`) // Basic auth
           },
           body: JSON.stringify({
-            participants: [newChatName] // Add the participants as needed
+            participants: [newChatName,username] // Add the participants as needed
           }),
         });
   

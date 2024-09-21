@@ -161,7 +161,7 @@ async def message(sid, data):
 
 # Fetch messages for a specific chat room (endpoint example)
 @app.get("/chats/{chat_id}/messages")
-async def get_chat_messages(chat_id: str, skip: int = 0, limit: int = 10):
+async def get_chat_messages(chat_id: str, skip: int = 0, limit: int = 10, username: str = Depends(authenticate_user)):
     chat = await chat_collection.find_one({"_id": chat_id})
     if not chat:
         raise HTTPException(status_code=404, detail="Chat not found")
@@ -174,9 +174,16 @@ async def get_chat_messages(chat_id: str, skip: int = 0, limit: int = 10):
 async def get_user_chats(
     user_id: str,
     skip: Optional[int] = Query(0, ge=0),  # Default to 0, must be >= 0
-    limit: Optional[int] = Query(10, ge=1, le=100)  # Default to 10, must be between 1 and 100
+    limit: Optional[int] = Query(10, ge=1, le=100),  # Default to 10, must be between 1 and 100
+    username: str = Depends(authenticate_user)
 ):
-    chats = await chat_collection.find({"created_by": user_id}).skip(skip).limit(limit).to_list(length=limit)
+    # Query to find documents where the username is in the participants array
+    query = {
+        "participants": {
+            "$in": [username]  # Use the $in operator to check if the username exists in the participants array
+        }
+    }
+    chats = await chat_collection.find(query).skip(skip).limit(limit).to_list(length=limit)
     print(chats)
     return chats
 
