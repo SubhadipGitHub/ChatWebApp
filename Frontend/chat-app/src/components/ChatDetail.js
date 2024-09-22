@@ -7,6 +7,7 @@ import './ChatDetail.css'; // Import custom CSS
 const socket = io("http://localhost:8000", {
   path: "/socket.io/", // Ensure the correct Socket.IO path is used
   transports: ['websocket'], // WebSocket transport
+  timeout: 5000 // Timeout in milliseconds
 });
 
 const username = localStorage.getItem('username'); // Get username from local storage

@@ -23,17 +23,37 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 # Socket.IO Server
 sio = socketio.AsyncServer(
     async_mode='asgi',
     cors_allowed_origins=["http://localhost:3000"]  # Allow frontend origin for WebSocket
 )
-app.mount("/socket.io/", socketio.ASGIApp(sio))
 
-# User registration, login, and other endpoints here (omitted for brevity)
+# Store connected users in a set or a dictionary
+online_users = set()
 
-# Socket.IO Events
+# Handle socket connection
+@sio.event
+async def connect(sid, environ):
+    print(f"User connected: {sid}")
+
+# Handle socket disconnection
+@sio.event
+async def disconnect(sid):
+    username = [user for user, session_id in online_users if session_id == sid]
+    if username:
+        online_users.remove((username[0], sid))
+        await sio.emit('user_offline', {'username': username[0]})
+    print(f"User disconnected: {sid}")
+
+# Listen for custom event 'user_connected'
+@sio.event
+async def user_connected(sid, data):
+    print(f'{data} passed')
+    username = data.get('username')
+    if username:
+        online_users.add((username, sid))
+        await sio.emit('user_online', {'username': username})
 
 # Join a specific chat room
 @sio.event
@@ -61,6 +81,10 @@ async def message(sid, data):
     message_data['chat_id']=chat_id
     # Emit the message to everyone in the room
     await sio.emit("new_message", message_data, room=chat_id)
+
+app.mount("/socket.io/", socketio.ASGIApp(sio))
+
+# User registration, login, and other endpoints here (omitted for brevity)
 
 # User registration
 @app.post("/register")
@@ -162,7 +186,8 @@ async def get_user_chats(
             "$in": [username]  # Use the $in operator to check if the username exists in the participants array
         }
     }
-    chats = await chat_collection.find(query).skip(skip).limit(limit).to_list(length=limit)
+    excludcols={"messages":0}
+    chats = await chat_collection.find(query,excludcols).skip(skip).limit(limit).to_list(length=limit)
     print(chats)
     return chats
 
