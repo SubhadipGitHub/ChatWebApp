@@ -42,7 +42,7 @@
 .message-content {
     background-color: #f1f1f1; /* Light background for messages */
     border-radius: 15px 15px 0px 15px; /* Rounded corners (slightly different) */
-    padding: 12px 18px; /* Increased padding for comfort */
+    padding: 5px 10px; /* Increased padding for comfort */
     max-width: 70%; /* Limit width of messages */
     word-wrap: break-word; /* Wrap long words */
     box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
@@ -52,14 +52,16 @@
 
 /* Sent message styles */
 .message-sent .message-content {
-    background: linear-gradient(135deg, #74ebd5, #ACB6E5); /* Gradient for sent messages */
+    background: linear-gradient(180deg, #d1c4b1, #127405); /* Gradient for sent messages */
     color: white; /* White text for sent messages */
+    border: 0.2px solid black;
 }
 
 /* Received message styles */
 .message-received .message-content {
-    background: linear-gradient(135deg, #FFEFBA, #FFFFFF); /* Gradient for received messages */
+    background: linear-gradient(180deg, #41d8ec, #e7b8b8); /* Gradient for received messages */
     color: black; /* Dark text for received messages */
+    border: 0.2px solid black;
 }
 
 .message-content:hover {
@@ -70,7 +72,7 @@
 /* Time of the message */
 .message-time {
     font-size: 0.75em; /* Smaller font size for time */
-    color: #6c757d; /* Gray color for time */
+    color: black; /* Gray color for time */
     position: absolute;
     bottom: -15px; /* Position below message */
     right: 10px;
@@ -112,15 +114,16 @@
   }
 
   .emoji-picker-button {
-    border: none; /* Remove default border */
-    border-radius: 20px; /* Rounded corners */
+    border: 1px solid black;
+    border-radius: 50%; /* Rounded corners */
     cursor: pointer; /* Change cursor to pointer */
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Add box shadow for 3D effect */
     transition: all 0.3s ease; /* Smooth transition for hover effects */
     color: white; /* Button text color */
     font-size: 16px; /* Adjust font size */
     outline: none; /* Remove outline */
-    margin: 10px 15px; /* Add space around the button */
+    margin: 10px 10px; /* Add space around the button */
+    padding: 8px;
 }
 
 .emoji-picker-button:hover {
@@ -141,7 +144,7 @@
 .chat-header {
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 1030;
   background-color: #f8f9fa;
   border-bottom: 1px solid #ddd;
 }
@@ -151,7 +154,7 @@
   flex-grow: 1;
   overflow-y: auto; /* Makes messages scrollable */
   padding: 1rem;
-  background-color: #f1f1f1;
+  background-color: lightblue;
 }
 
 /* Chat Input - Fixed at the bottom */
@@ -168,4 +171,10 @@
   .chat-header, .chat-input {
     padding: 0.5rem;
   }
+}
+
+.chat-detail-image {
+  background-color: #f1f1f1; /* Light background for messages */
+  border-radius: 15px 15px 0px 15px; /* Rounded corners (slightly different) */
+  border: 1px solid black;
 }

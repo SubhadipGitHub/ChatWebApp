@@ -5,13 +5,27 @@
   height: 100vh;
   width: 100vw;
   overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  /* Subtle shadow for depth */
+  background-color: lightblue;
+  border: 1px solid #dee2e6;
 }
 
-/* Chat List Container - occupies full width on mobile, splits on desktop */
+/* Ensure that the chat list takes full height of its container */
 .chat-list-container {
-  flex: 1;
-  background-color: #f4f4f4;
+  height: 100%;
+  /* Full height */
+  border: 1px solid #dee2e6;
+  /* Bootstrap border color */
+  border-radius: 10px;
+  /* Increased rounding for smoother appearance */
   overflow-y: auto;
+  /* Enable vertical scrolling */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  /* Subtle shadow for depth */
+  background-color: lightblue;
+  /* Light background color for the container */
+  transition: all 0.3s ease-in-out;
 }
 
 /* Chat Detail Container - hidden by default on small screens, shows when selected */
@@ -52,7 +66,6 @@
     top: 0;
     left: 0;
     z-index: 1000;
-    background-color: white;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
   }
 

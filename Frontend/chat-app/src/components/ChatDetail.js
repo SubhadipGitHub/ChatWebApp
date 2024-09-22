@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 import EmojiPicker from 'emoji-picker-react'; // Emoji Picker library
 import './ChatDetail.css'; // Import custom CSS
@@ -17,6 +17,9 @@ const ChatDetail = ({ chatId, chatName, chatimage, loggedInUser }) => {
   const [message, setMessage] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false); // State to show/hide emoji picker
   const [messages, setMessages] = useState([]); // State for chat messages
+
+  // Create a reference to the chat messages container
+  const chatMessagesRef = useRef(null);
 
   useEffect(() => {
     // Join the chat room
@@ -60,6 +63,13 @@ const ChatDetail = ({ chatId, chatName, chatimage, loggedInUser }) => {
     };
   }, [chatId, loggedInUser]); // Dependencies to ensure effect runs correctly
 
+  // Scroll to the bottom whenever messages change
+  useEffect(() => {
+    if (chatMessagesRef.current) {
+      chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
+    }
+  }, [messages]);
+
   // Send a message to the specific room
   const sendMessage = () => {
     if (message.trim()) {
@@ -75,8 +85,12 @@ const ChatDetail = ({ chatId, chatName, chatimage, loggedInUser }) => {
     }
   };
 
-  const handleEmojiClick = (emojiObject) => {
-    setMessage((prevMessage) => prevMessage + emojiObject.emoji);
+  const handleEmojiClick = (event, emojiObject) => {
+    console.log('Event:', event); // Log the event object
+    console.log('Emoji Object:', emojiObject); // Log the emoji object
+    if (event) {
+      setMessage((prevMessage) => prevMessage + event.emoji);
+    }
   };
 
   // Handle the key press event to trigger login on "Enter"
@@ -93,14 +107,14 @@ const ChatDetail = ({ chatId, chatName, chatimage, loggedInUser }) => {
     <img
       src={chatimage || 'https://via.placeholder.com/50'}
       alt="Chat"
-      className="rounded-circle me-3"
+      className="chat-detail-image rounded-circle me-3"
       style={{ width: '50px', height: '50px' }}
     />
     <h5 className="mb-0">{chatName}</h5>
   </div>
 
   {/* Chat messages section - Scrollable */}
-  <div className="chat-messages flex-grow-1 overflow-auto p-3">
+  <div className="chat-messages flex-grow-1 overflow-auto p-3" ref={chatMessagesRef}>
     {messages.map((msg, index) => (
       <div
         key={index}
@@ -122,7 +136,7 @@ const ChatDetail = ({ chatId, chatName, chatimage, loggedInUser }) => {
 
   {/* Chat input section - Stuck at the bottom */}
   <div className="chat-input p-3 d-flex align-items-center bg-light border-top">
-    <button className="btn emoji-picker-button" onClick={() => setShowEmojiPicker(!showEmojiPicker)}>
+    <button className="emoji-picker-button" onClick={() => setShowEmojiPicker(!showEmojiPicker)}>
       😀
     </button>
     <input
@@ -141,7 +155,9 @@ const ChatDetail = ({ chatId, chatName, chatimage, loggedInUser }) => {
   {/* Emoji Picker */}
   {showEmojiPicker && (
     <div className="emoji-picker-container">
-      <EmojiPicker onEmojiClick={(event, emojiObject) => handleEmojiClick(emojiObject)} />
+      {showEmojiPicker && (
+        <EmojiPicker onEmojiClick={handleEmojiClick} />
+      )}
     </div>
   )}
 </div>

@@ -1,23 +1,12 @@
-/* Ensure that the chat list takes full height of its container */
-.chat-list-container {
-  height: 100%;
-  /* Full height */
-  border: 1px solid #dee2e6;
-  /* Bootstrap border color */
-  border-radius: 10px;
-  /* Increased rounding for smoother appearance */
-  overflow-y: auto;
-  /* Enable vertical scrolling */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  /* Subtle shadow for depth */
+.chat-header-title {
   background-color: #f5f5f5;
-  /* Light background color for the container */
-  transition: all 0.3s ease-in-out;
+  border-top: 1px solid #ddd;
+  border-radius: 5px;
+  border: 2px solid white;
 }
 
 /* Chat list items */
 .chat-list-container .list-group-item {
-  background-color: #fff;
   /* Card background color */
   padding: 15px;
   border-radius: 8px;
@@ -28,7 +17,6 @@
 
 /* Hover effect for chat list items */
 .chat-list-container .list-group-item:hover {
-  background-color: #e9ecef;
   /* Hover background color */
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
   /* Slight shadow on hover */
@@ -54,26 +42,15 @@
   /* Push icon to the right */
 }
 
-/* Chat header styling */
-.chat-header {
-  font-weight: bold;
-  font-size: 1.5rem;
-  /* Larger font size */
-  color: #343a40;
-  /* Darker shade for visibility */
-  text-align: center;
-  padding: 15px 0;
-  border-bottom: 2px solid #dee2e6;
-  /* Bottom border to separate header */
-  background-color: #fff;
-  /* White background for clarity */
-  border-radius: 10px 10px 0 0;
-  /* Rounded top corners */
-}
-
 .profile-image-wrapper {
   position: relative;
   display: inline-block;
+  cursor: pointer;
+}
+
+.profile-image {
+  border: 2px solid black;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .online-badge {
@@ -91,9 +68,10 @@
 
 /* User profile section */
 .user-profile-section {
-  background-color: #f8f9fa;
-  /* Light gray background */
+  background-color: #f5f5f5;
   border-top: 1px solid #ddd;
+  border-radius: 5px;
+  border: 2px solid white;
   /* Top border */
   padding: 10px 15px;
   align-items: center;
@@ -121,7 +99,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 1050;
+  z-index: 2050;
   overflow: hidden;
   background-color: rgba(0, 0, 0, 0.5);
   /* Dark overlay background */
@@ -129,7 +107,7 @@
 
 /* Center modal on the page */
 .modal-dialog {
-  margin: 2rem auto;
+  margin: 10rem auto;
   max-width: 500px;
   /* Restrict max width for better readability */
   width: 100%;
@@ -196,7 +174,77 @@
   right: 0px;
   width: 25px;
   height: 25px;
-  background-color: #4caf50; /* Green for online status */
+  background-color: #4caf50;
+  /* Green for online status */
   border-radius: 50%;
   border: 2px solid white;
+}
+
+.chat-title {
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.chat-icon {
+  font-size: 24px;
+  color: #ffffff;
+  transition: transform 0.3s ease;
+}
+
+.chat-header:hover .chat-icon {
+  transform: rotate(360deg);
+  /* Rotate icon on hover */
+}
+
+.btn-add-chat {
+  background: lightgreen;
+  color: black;
+  border: 1px solid #dee2e6;
+  padding: 8px 16px;
+  font-size: 16px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.btn-add-chat i {
+  font-size: 18px;
+}
+
+.btn-add-chat:hover {
+  background: darkgreen;
+  color: #ffffff;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+  transform: scale(1.05);
+  /* Slightly increase size on hover */
+}
+
+
+.list-group-item.active-chat {
+  background-color: #007bff;
+  /* Blue background for selected chat */
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
+  /* Stronger shadow for active */
+  border-left: 5px solid #0056b3;
+  /* Add a border to the left */
+}
+
+.active-chat h6,
+.active-chat p {
+  color: #fff;
+  /* Make text white for the selected chat */
+}
+
+.active-chat .fas.fa-chevron-right {
+  color: #fff;
+  /* Change the arrow icon color */
+}
+
+.chat-list-image {
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
+  border: 1px solid #dee2e6;
 }

@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState,useMemo } from 'react';
 import '@fortawesome/fontawesome-free/css/all.min.css'; // Import FontAwesome CSS
 import './ChatList.css'; // Import custom CSS
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { createAvatar } from '@dicebear/core';
+import { lorelei } from '@dicebear/collection';
 
 const ChatList = ({ chats, onChatSelect, loggedInUser, onLogout, onAddChat }) => {
   const [showUserModal, setShowUserModal] = useState(false); // Modal for logged-in user
@@ -10,6 +12,7 @@ const ChatList = ({ chats, onChatSelect, loggedInUser, onLogout, onAddChat }) =>
   const [searchQuery, setSearchQuery] = useState(''); // State for search query
   const [showAddChatModal, setShowAddChatModal] = useState(false); // Modal for adding a chat
   const [newChatName, setNewChatName] = useState(''); // State for new chat name
+  const [selectedChat, setSelectedChat] = useState(null);
 
   // Function to handle modal open/close for logged-in user
   const handleShowUserModal = () => setShowUserModal(true);
@@ -22,6 +25,15 @@ const ChatList = ({ chats, onChatSelect, loggedInUser, onLogout, onAddChat }) =>
   // Function to handle the 'Add Chat' modal
   const handleShowAddChatModal = () => setShowAddChatModal(true);
   const handleCloseAddChatModal = () => setShowAddChatModal(false);
+
+  const avatar = useMemo(() => {
+    return createAvatar(lorelei, {
+      size: 128,
+      seed: 24,
+      // ... other options
+    }).toDataUri();
+  }, []);
+
 
   const handleLogout = () => {
     localStorage.clear();
@@ -102,16 +114,21 @@ const ChatList = ({ chats, onChatSelect, loggedInUser, onLogout, onAddChat }) =>
     chat.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  console.log(onChatSelect);
+
   return (
-    <div className="chat-list-container p-3 d-flex flex-column" style={{ height: '100vh', borderRight: '1px solid #ddd' }}>
+    <div className="chat-header chat-list-container p-3 d-flex flex-column" style={{ height: '100vh', borderRight: '1px solid #ddd' }}>
       {/* Chats header */}
-      <div className="chat-header mb-3 d-flex justify-content-between align-items-center p-2">
-        <h5>Chats</h5>
+      <div className="chat-header-title mb-3 d-flex justify-content-between align-items-center p-2 bg-gradient shadow-sm">
+        <h5 className="chat-title mb-0 d-flex align-items-center">
+          <i className="fas fa-comments me-2 text-primary chat-icon"></i> Chats
+        </h5>
         {/* Add Chat Button */}
         <button className="btn btn-primary" onClick={handleShowAddChatModal}>
-          <i className="fas fa-plus"></i> Add Chat
+          <i className="fas fa-plus me-2"></i> Add Chat
         </button>
       </div>
+
 
       {/* Search bar */}
       <div className="mb-3">
@@ -130,11 +147,16 @@ const ChatList = ({ chats, onChatSelect, loggedInUser, onLogout, onAddChat }) =>
           filteredChats.map((chat, index) => (
             <div
               key={index}
-              className="list-group-item list-group-item-action d-flex align-items-center mb-2 border-0 rounded"
+              className={`list-group-item list-group-item-action d-flex align-items-center mb-2 border-0 rounded ${selectedChat === chat ? 'active-chat' : ''}`} 
               onClick={() => onChatSelect(chat)}
             >
               <div className="d-flex align-items-center me-3" onClick={(e) => { e.stopPropagation(); handleShowChatModal(index); }}>
-                <i className="fas fa-user-circle fa-2x text-primary"></i>
+              <img
+                src={avatar} // Use the memoized avatar
+                alt={`${chat.name} avatar`}
+                className="rounded-circle chat-list-image"
+                style={{ width: '50px', height: '50px' }}
+              />
               </div>
               <div className="w-100">
                 <h6 className="mb-1">{chat.name}</h6>
@@ -158,7 +180,7 @@ const ChatList = ({ chats, onChatSelect, loggedInUser, onLogout, onAddChat }) =>
               <img
                 src={loggedInUser.profileImage} // Use loggedInUser.image for user1 and chat.image for others
                 alt={loggedInUser.name}
-                className="rounded-circle me-2"
+                className="rounded-circle me-2 profile-image"
                 style={{ width: '40px', height: '40px' }}
               />
               {/* Online Badge */}
