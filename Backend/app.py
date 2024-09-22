@@ -44,12 +44,12 @@ async def join_room(sid, chat_id):
 # Handle message sending to a specific room
 @sio.event
 async def message(sid, data):
-    print(data)
+    #print(data)
     chat_id = data['chat_id']
     message_data = {
-        'text': data['text'],
+        'content': data['content'],
         'sender': data['sender'],
-        'timestamp': datetime.utcnow().isoformat()  # Convert to ISO string
+        'time': datetime.utcnow().isoformat()  # Convert to ISO string
     }
 
     # Save message in MongoDB
@@ -137,27 +137,6 @@ async def create_chat(chat: ChatCreate, username: str = Depends(authenticate_use
     
     new_chat = await chat_collection.insert_one(chat_data)
     return {"chat_id": str(new_chat.inserted_id)}
-
-# Handle message sending to a specific room
-@sio.event
-async def message(sid, data):
-    print(data)
-    chat_id = data['chat_id']
-    message_data = {
-        'content': data['text'],
-        'sender': data['sender'],
-        'time': datetime.utcnow().isoformat()  # Convert to ISO string
-    }
-
-    # Save message in MongoDB
-    await chat_collection.update_one(
-        {"_id": chat_id},
-        {"$push": {"messages": message_data}}
-    )
-
-    message_data['chat_id']=chat_id
-    # Emit the message to everyone in the room
-    await sio.emit("new_message", message_data, room=chat_id)
 
 # Fetch messages for a specific chat room (endpoint example)
 @app.get("/chats/{chat_id}/messages")

@@ -40,11 +40,11 @@ const ChatList = ({ chats, onChatSelect, loggedInUser, onLogout, onAddChat }) =>
       try {
         const username = localStorage.getItem('username'); // Get username from local storage
         const password = localStorage.getItem('password'); // Get password from local storage
-  
+
         // Customizable base URI
         const baseURI = 'http://localhost:8000'; // You can change this as needed
         const endpoint = `${baseURI}/chats/`; // Complete endpoint
-  
+
         const response = await fetch(endpoint, {
           method: 'POST',
           headers: {
@@ -52,15 +52,15 @@ const ChatList = ({ chats, onChatSelect, loggedInUser, onLogout, onAddChat }) =>
             'Authorization': 'Basic ' + btoa(`${username}:${password}`) // Basic auth
           },
           body: JSON.stringify({
-            participants: [newChatName,username] // Add the participants as needed
+            participants: [newChatName, username] // Add the participants as needed
           }),
         });
-  
+
         if (!response.ok) {
           // Handle different error cases based on status code
           const errorData = await response.json();
           let errorMessage = 'Failed to create chat.';
-  
+
           if (response.status === 400) {
             errorMessage = errorData.detail || 'Chat with the same participants already exists.';
           } else if (response.status === 404) {
@@ -68,10 +68,10 @@ const ChatList = ({ chats, onChatSelect, loggedInUser, onLogout, onAddChat }) =>
           } else if (response.status === 500) {
             errorMessage = 'Internal server error. Please try again later.';
           }
-  
+
           throw new Error(errorMessage);
         }
-  
+
         const data = await response.json();
         console.log('New chat created with ID:', data.chat_id);
         // onAddChat(newChatName); // Call the parent function to add the chat
@@ -95,7 +95,7 @@ const ChatList = ({ chats, onChatSelect, loggedInUser, onLogout, onAddChat }) =>
       });
     }
   };
-  
+
 
   // Filter chats based on search query
   const filteredChats = chats.filter(chat =>
@@ -133,7 +133,7 @@ const ChatList = ({ chats, onChatSelect, loggedInUser, onLogout, onAddChat }) =>
               className="list-group-item list-group-item-action d-flex align-items-center mb-2 border-0 rounded"
               onClick={() => onChatSelect(chat)}
             >
-              <div className="d-flex align-items-center me-3" onClick={(e) => {e.stopPropagation(); handleShowChatModal(index);}}>
+              <div className="d-flex align-items-center me-3" onClick={(e) => { e.stopPropagation(); handleShowChatModal(index); }}>
                 <i className="fas fa-user-circle fa-2x text-primary"></i>
               </div>
               <div className="w-100">
@@ -154,17 +154,24 @@ const ChatList = ({ chats, onChatSelect, loggedInUser, onLogout, onAddChat }) =>
       <div className="user-profile-section mt-3">
         <div className="d-flex align-items-center justify-content-between p-2">
           <div className="d-flex align-items-center" onClick={handleShowUserModal}>
-          <img
-        src={loggedInUser.profileImage} // Use loggedInUser.image for user1 and chat.image for others
-        alt={loggedInUser.name}
-        className="rounded-circle me-2"
-        style={{ width: '40px', height: '40px' }}
-      />
+            <div className="profile-image-wrapper">
+              <img
+                src={loggedInUser.profileImage} // Use loggedInUser.image for user1 and chat.image for others
+                alt={loggedInUser.name}
+                className="rounded-circle me-2"
+                style={{ width: '40px', height: '40px' }}
+              />
+              {/* Online Badge */}
+              <span className="online-badge"></span>
+            </div>
+
             <span>{loggedInUser.name}</span>
           </div>
-          <button className="btn btn-danger" onClick={handleLogout}>
-            <i className="fas fa-sign-out-alt"></i> Logout
-          </button>
+          <div className="d-flex align-items-center">
+            <button className="btn btn-danger" onClick={handleLogout}>
+              <i className="fas fa-sign-out-alt"></i> Logout
+            </button>
+          </div>
         </div>
       </div>
 
@@ -223,16 +230,18 @@ const ChatList = ({ chats, onChatSelect, loggedInUser, onLogout, onAddChat }) =>
                 ></button>
               </div>
               <div className="modal-body text-center">
+              <div className="profile-image-wrapper-modal">
                 <img
                   src={loggedInUser.profileImage || 'https://via.placeholder.com/150'}
                   alt="User Profile"
                   className="rounded-circle mb-3"
                   style={{ width: '100px', height: '100px', objectFit: 'cover' }}
                 />
+                <span className="online-badge-modal"></span>
+                </div>
                 <p><strong>Name:</strong> {loggedInUser.name}</p>
                 <p><strong>Created At:</strong> Jan 1, 2022</p> {/* Dummy data */}
                 <p><strong>About Me:</strong> This is a dummy about me section.</p> {/* Dummy data */}
-                <p><strong>Status:</strong> Online</p> {/* Dummy data */}
               </div>
               <div className="modal-footer">
                 <button
@@ -275,7 +284,6 @@ const ChatList = ({ chats, onChatSelect, loggedInUser, onLogout, onAddChat }) =>
                   />
                   <p><strong>Name:</strong> {chat.name}</p>
                   <p><strong>Last Message:</strong> {chat.latestMessage}</p>
-                  <p><strong>Participants:</strong> {chat.participants.join(', ')}</p>
                 </div>
                 <div className="modal-footer">
                   <button

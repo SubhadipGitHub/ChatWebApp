@@ -1,58 +1,202 @@
 /* Ensure that the chat list takes full height of its container */
 .chat-list-container {
-    height: 100%; /* Takes the full height of the parent container */
-    border: 1px solid #dee2e6; /* Border color similar to Bootstrap’s border color */
-    border-radius: 0.375rem; /* Rounded corners */
-    overflow-y: auto; /* Enable vertical scrolling if needed */
+  height: 100%;
+  /* Full height */
+  border: 1px solid #dee2e6;
+  /* Bootstrap border color */
+  border-radius: 10px;
+  /* Increased rounding for smoother appearance */
+  overflow-y: auto;
+  /* Enable vertical scrolling */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  /* Subtle shadow for depth */
+  background-color: #f5f5f5;
+  /* Light background color for the container */
+  transition: all 0.3s ease-in-out;
+}
+
+/* Chat list items */
+.chat-list-container .list-group-item {
+  background-color: #fff;
+  /* Card background color */
+  padding: 15px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+/* Hover effect for chat list items */
+.chat-list-container .list-group-item:hover {
+  background-color: #e9ecef;
+  /* Hover background color */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+  /* Slight shadow on hover */
+  cursor: pointer;
+}
+
+/* Avatar icon */
+.chat-list-container .list-group-item .fa-user-circle {
+  color: #007bff;
+  /* Primary color for avatar */
+  font-size: 2rem;
+  /* Larger icon size for better visibility */
+  margin-right: 15px;
+}
+
+/* Right-side chevron icon */
+.chat-list-container .list-group-item .fa-chevron-right {
+  color: #6c757d;
+  /* Muted icon color */
+  font-size: 1.25rem;
+  /* Slightly larger for emphasis */
+  margin-left: auto;
+  /* Push icon to the right */
+}
+
+/* Chat header styling */
+.chat-header {
+  font-weight: bold;
+  font-size: 1.5rem;
+  /* Larger font size */
+  color: #343a40;
+  /* Darker shade for visibility */
+  text-align: center;
+  padding: 15px 0;
+  border-bottom: 2px solid #dee2e6;
+  /* Bottom border to separate header */
+  background-color: #fff;
+  /* White background for clarity */
+  border-radius: 10px 10px 0 0;
+  /* Rounded top corners */
+}
+
+.profile-image-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.online-badge {
+  position: absolute;
+  top: 0px;
+  right: 5px;
+  width: 12px;
+  height: 12px;
+  background-color: #4caf50;
+  /* Green for online status */
+  border-radius: 50%;
+  border: 2px solid white;
+  /* Creates a small white border around the badge */
+}
+
+/* User profile section */
+.user-profile-section {
+  background-color: #f8f9fa;
+  /* Light gray background */
+  border-top: 1px solid #ddd;
+  /* Top border */
+  padding: 10px 15px;
+  align-items: center;
+}
+
+/* Settings icon in user profile */
+.user-profile-section .fa-cog {
+  font-size: 1.75rem;
+  /* Larger settings icon */
+  color: #007bff;
+  /* Primary color */
+  transition: color 0.3s ease-in-out;
+}
+
+.user-profile-section .fa-cog:hover {
+  color: #0056b3;
+  /* Darker blue on hover */
+  cursor: pointer;
+}
+
+/* Modal styling */
+.modal.fade.show {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1050;
+  overflow: hidden;
+  background-color: rgba(0, 0, 0, 0.5);
+  /* Dark overlay background */
+}
+
+/* Center modal on the page */
+.modal-dialog {
+  margin: 2rem auto;
+  max-width: 500px;
+  /* Restrict max width for better readability */
+  width: 100%;
+}
+
+/* Modal content padding */
+.modal-content {
+  padding: 20px;
+  border-radius: 10px;
+  /* Rounded corners for modal */
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  /* Modal shadow */
+  background-color: #fff;
+  /* Clean white background */
+}
+
+/* Responsive design for chat list */
+@media (max-width: 768px) {
+  .chat-list-container {
+    padding: 10px;
+    height: auto;
+    /* Adjust height for mobile */
   }
-  
-  .chat-list-container .list-group-item {
-    background-color: #fff; /* Card background color */
-  }
-  
-  .chat-list-container .list-group-item:hover {
-    background-color: #f8f9fa; /* Hover background color */
-  }
-  
-  .chat-list-container .list-group-item .fa-user-circle {
-    color: #007bff; /* Avatar color */
-  }
-  
-  .chat-list-container .list-group-item .fa-chevron-right {
-    color: #6c757d; /* Icon color */
-  }
-  
+
   .chat-header {
-    font-weight: bold;
     font-size: 1.25rem;
+    /* Adjust font size for mobile */
+    padding: 10px 0;
   }
-  
-  .user-profile-section {
-    background-color: #f8f9fa;
-    border-top: 1px solid #ddd;
+}
+
+/* Even smaller screens */
+@media (max-width: 480px) {
+  .chat-list-container {
+    padding: 5px;
   }
-  
-  .user-profile-section .fa-cog {
-    font-size: 1.5rem;
-    color: #007bff;
+
+  .chat-list-container .list-group-item {
+    font-size: 0.9rem;
+    /* Slightly smaller font for mobile */
+    padding: 10px;
   }
-  
-  .modal.fade.show {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 1050;
-    overflow: hidden;
+
+  .chat-header {
+    font-size: 1rem;
+    padding: 8px 0;
   }
-  
-  .modal-dialog {
-    margin: 1.75rem auto;
-  }
-  
-  .modal-content {
-    padding: 20px;
-  }
-  
-  
+}
+
+.profile-image-wrapper-modal {
+  position: relative;
+  display: inline-block;
+}
+
+.profile-image-modal {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+}
+
+.online-badge-modal {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  width: 25px;
+  height: 25px;
+  background-color: #4caf50; /* Green for online status */
+  border-radius: 50%;
+  border: 2px solid white;
+}

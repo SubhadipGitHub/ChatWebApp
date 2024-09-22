@@ -38,13 +38,23 @@ const ChatPage = () => {
         }
 
         const data = await response.json();
-        // Assuming data.chats is an array of chat objects
-        const formattedChats = data.map(chat => ({
-          id: chat._id,
-          name: chat.name,
-          image: chat.image, // Assuming you include an image field in your chat data
-          messages: chat.messages || [], // Include messages if available
-        }));
+        // Assuming data is an array of chat objects
+  const formattedChats = data.map(chat => {
+    // Filter out the logged-in user (username) from the participants list
+    const participantsWithoutLoggedInUser = chat.participants.filter(
+      participant => participant !== username
+    );
+
+    // Join remaining participants into a string with '-' separator
+    const participantsString = participantsWithoutLoggedInUser.join('-');
+
+    return {
+      id: chat._id,
+      name: participantsString,   // Use concatenated participants' names
+      image: chat.image,          // Assuming you include an image field in your chat data
+      messages: chat.messages || [] // Include messages if available
+    };
+  });
 
         setChats(formattedChats); // Set the fetched chats
       } catch (error) {

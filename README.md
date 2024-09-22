@@ -131,3 +131,7 @@ To run this application, ensure that you have the following installed:
 `cd Frontend`
 `cd chat-app`
 `npm start`
+
+#### Issues
+
+Sometimes if you are working in Mongo DB Atlas the network access for local might change.Either you add current IP or give it all IP permissionIn production usually give production domain IP permission.

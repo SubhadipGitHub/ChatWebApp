@@ -64,10 +64,10 @@ const ChatDetail = ({ chatId, chatName, chatimage, loggedInUser }) => {
     if (message.trim()) {
       const messageData = {
         chat_id: chatId,
-        text: message,
+        content: message,
         sender: loggedInUser.name,
       };
-      //console.log(messageData)
+      console.log(messageData)
       //console.log('Logged in user:', loggedInUser);
       socket.emit("message", messageData);
       setMessage(''); // Clear input after sending
@@ -76,6 +76,13 @@ const ChatDetail = ({ chatId, chatName, chatimage, loggedInUser }) => {
 
   const handleEmojiClick = (emojiObject) => {
     setMessage((prevMessage) => prevMessage + emojiObject.emoji);
+  };
+
+  // Handle the key press event to trigger login on "Enter"
+  const handleKeyDown = (event) => {
+    if (event.key === 'Enter') {
+      sendMessage(); // Call send message function when Enter key is pressed
+    }
   };
 
   return (
@@ -125,6 +132,7 @@ const ChatDetail = ({ chatId, chatName, chatimage, loggedInUser }) => {
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           placeholder="Type a message"
+          onKeyDown={handleKeyDown} // Attach the enter key listener
         />
         <button className="btn btn-success ms-2" onClick={sendMessage}>
           Send

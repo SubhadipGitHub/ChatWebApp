@@ -31,6 +31,13 @@ const Login = () => {
     }
   };
 
+  // Handle the keypress event for Enter key
+  const handleKeyPress = (e) => {
+    if (e.keyCode === 13 || e.which === 13) {
+      handleLogin(); // Trigger login on Enter key
+    }
+  };
+
   return (
     <div className="container d-flex justify-content-center mt-5">
       <div className="card shadow-lg p-4" style={{ width: '400px' }}>
@@ -43,6 +50,7 @@ const Login = () => {
             placeholder="Username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
+            onKeyDown={handleKeyPress} // Attach the enter key listener
           />
         </div>
 
@@ -53,6 +61,7 @@ const Login = () => {
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={handleKeyPress} // Attach the enter key listener
           />
         </div>
 

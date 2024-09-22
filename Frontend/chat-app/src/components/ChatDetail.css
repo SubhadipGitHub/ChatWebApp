@@ -36,40 +36,71 @@
   .message {
     display: flex;
     align-items: flex-start;
-    margin-bottom: 15px; /* Spacing between messages */
-  }
-  
-  .message-sent {
+    margin-bottom: 15px; /* Space between messages */
+    padding: 5px 10px;
+    transition: all 0.3s ease-in-out; /* Smooth transition */
+}
+
+/* Sent and received message alignment */
+.message-sent {
     justify-content: flex-end; /* Align sent messages to the right */
-  }
-  
-  .message-received {
+}
+
+.message-received {
     justify-content: flex-start; /* Align received messages to the left */
-  }
-  
-  .message-content {
-    background-color: #e2e3e5; /* Background color for messages */
-    border-radius: 20px; /* Rounded corners for messages */
-    padding: 10px 15px; /* Padding for messages */
+}
+
+.message-content {
+    background-color: #f1f1f1; /* Light background for messages */
+    border-radius: 15px 15px 0px 15px; /* Rounded corners (slightly different) */
+    padding: 12px 18px; /* Increased padding for comfort */
     max-width: 70%; /* Limit width of messages */
     word-wrap: break-word; /* Wrap long words */
-  }
-  
-  .message-sent .message-content {
-    background-color: lightgreen; /* Sent message color */
-    color: white; /* Text color for sent messages */
-  }
-  
-  .message-received .message-content {
-    background-color: #e2e3e5; /* Color for received messages */
-    color: black; /* Text color for received messages */
-  }
-  
-  .message-time {
-    font-size: 0.8em; /* Smaller font size for message time */
+    box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+    position: relative; /* Position for time */
+    transition: all 0.3s ease; /* Smooth transition for hover effects */
+}
+
+/* Sent message styles */
+.message-sent .message-content {
+    background: linear-gradient(135deg, #74ebd5, #ACB6E5); /* Gradient for sent messages */
+    color: white; /* White text for sent messages */
+}
+
+/* Received message styles */
+.message-received .message-content {
+    background: linear-gradient(135deg, #FFEFBA, #FFFFFF); /* Gradient for received messages */
+    color: black; /* Dark text for received messages */
+}
+
+.message-content:hover {
+    transform: translateY(-2px); /* Slight lift effect on hover */
+    box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.2); /* Stronger shadow on hover */
+}
+
+/* Time of the message */
+.message-time {
+    font-size: 0.75em; /* Smaller font size for time */
     color: #6c757d; /* Gray color for time */
-    margin-left: 10px; /* Space between message and time */
-  }
+    position: absolute;
+    bottom: -15px; /* Position below message */
+    right: 10px;
+    white-space: nowrap;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .message-content {
+        max-width: 85%; /* Increase width for smaller screens */
+    }
+}
+
+@media (max-width: 480px) {
+    .message-content {
+        max-width: 90%; /* Further increase width on very small screens */
+        padding: 10px 12px; /* Reduce padding for smaller screens */
+    }
+}
   
   
   .card-footer {
@@ -97,7 +128,18 @@
   }
 
   .emoji-picker-button {
-    background-color: transparent;
-    border-radius: 20px; /* Rounded corners for messages */
-    border: #6c757d;
-  }
+    border: none; /* Remove default border */
+    border-radius: 20px; /* Rounded corners */
+    cursor: pointer; /* Change cursor to pointer */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Add box shadow for 3D effect */
+    transition: all 0.3s ease; /* Smooth transition for hover effects */
+    color: white; /* Button text color */
+    font-size: 16px; /* Adjust font size */
+    outline: none; /* Remove outline */
+    margin: 10px 15px; /* Add space around the button */
+}
+
+.emoji-picker-button:hover {
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2); /* Stronger shadow on hover */
+    transform: translateY(-2px); /* Slight lift effect */
+}
