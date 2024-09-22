@@ -109,9 +109,21 @@ const ChatPage = () => {
   };
 
   return (
-    <div className="chat-page-container d-flex">
-      <ChatList chats={chats} onChatSelect={handleChatSelect} loggedInUser={loggedInUser} />
-      {selectedChat && <ChatDetail chatId={selectedChat.id} chatimage={selectedChat.image} chatName={selectedChat.name} loggedInUser={loggedInUser} />} {/* Pass chatId and chatName */}
+    <div className="chat-page-container">
+      <div className="chat-list-container">
+        <ChatList chats={chats} onChatSelect={handleChatSelect} loggedInUser={loggedInUser} />
+      </div>
+
+      <div className={`chat-detail-container ${selectedChat ? 'active' : ''}`}>
+        {selectedChat && (
+          <ChatDetail 
+            chatId={selectedChat.id} 
+            chatimage={selectedChat.image} 
+            chatName={selectedChat.name} 
+            loggedInUser={loggedInUser} 
+          />
+        )}
+      </div>
 
       {/* Add the ToastContainer at the end */}
       <ToastContainer />

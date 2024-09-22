@@ -20,17 +20,6 @@
     height: 100%;
   }
   
-  .chat-messages {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 60px; /* Space for input area */
-  }
-  
-  .chat-detail-container {
-    background-color: #f8f9fa; /* Light background for the chat area */
-    border-radius: 8px; /* Rounded corners */
-  }
-  
   
   
   .message {
@@ -114,11 +103,6 @@
     display: flex;
     align-items: center;
   }
-
-  .chat-input {
-    display: flex;
-    align-items: center;
-  }
   
   .emoji-picker-container {
     position: absolute;
@@ -142,4 +126,46 @@
 .emoji-picker-button:hover {
     box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2); /* Stronger shadow on hover */
     transform: translateY(-2px); /* Slight lift effect */
+}
+
+/* Chat Detail Container */
+.chat-detail-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* Ensure the container fills the entire height */
+  width: 100%;  /* Responsive width */
+  overflow: hidden; /* Prevent content overflow */
+}
+
+/* Chat Header - Fixed at the top */
+.chat-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #ddd;
+}
+
+/* Chat Messages - Scrollable area between header and input */
+.chat-messages {
+  flex-grow: 1;
+  overflow-y: auto; /* Makes messages scrollable */
+  padding: 1rem;
+  background-color: #f1f1f1;
+}
+
+/* Chat Input - Fixed at the bottom */
+.chat-input {
+  position: sticky;
+  bottom: 0;
+  background-color: #f8f9fa;
+  border-top: 1px solid #ddd;
+  z-index: 10;
+}
+
+/* Mobile-first design */
+@media (max-width: 767px) {
+  .chat-header, .chat-input {
+    padding: 0.5rem;
+  }
 }

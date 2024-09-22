@@ -1,15 +1,64 @@
-/* Ensure the chat page layout expands to full height */
+/* Chat Page Container */
 .chat-page-container {
-    height: 100vh; /* Full viewport height */
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+/* Chat List Container - occupies full width on mobile, splits on desktop */
+.chat-list-container {
+  flex: 1;
+  background-color: #f4f4f4;
+  overflow-y: auto;
+}
+
+/* Chat Detail Container - hidden by default on small screens, shows when selected */
+.chat-detail-container {
+  flex: 2;
+  display: none;
+  background-color: #fff;
+  overflow-y: auto;
+  transition: all 0.3s ease;
+}
+
+/* Show chat detail when a chat is selected */
+.chat-detail-container.active {
+  display: block;
+}
+
+/* Media Queries for responsiveness */
+@media (min-width: 768px) {
+  /* On tablets and larger, show side by side */
+  .chat-page-container {
+    flex-direction: row;
   }
-  
+
   .chat-list-container {
-    height: 100%; /* Full height of parent */
-    flex: 1; /* Allows the ChatList to take remaining space */
+    flex: 1;
   }
-  
+
   .chat-detail-container {
-    height: 100%; /* Full height of parent */
-    flex: 3; /* Adjust as needed */
+    display: block;
+    flex: 2;
   }
-  
+}
+
+/* Mobile-first */
+@media (max-width: 767px) {
+  .chat-detail-container.active {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    background-color: white;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Make chat list full width */
+  .chat-list-container {
+    width: 100vw;
+    height: 100vh;
+  }
+}

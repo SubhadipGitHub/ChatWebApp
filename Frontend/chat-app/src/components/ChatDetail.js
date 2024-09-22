@@ -87,66 +87,65 @@ const ChatDetail = ({ chatId, chatName, chatimage, loggedInUser }) => {
   };
 
   return (
-    <div className="chat-detail-container d-flex flex-column flex-grow-3">
-      {/* Chat header */}
-      <div className="chat-header p-3 bg-light border-bottom d-flex align-items-center">
+    <div className="chat-detail-container d-flex flex-column flex-grow-1">
+  {/* Chat header - Stuck at the top */}
+  <div className="chat-header p-3 bg-light border-bottom d-flex align-items-center">
+    <img
+      src={chatimage || 'https://via.placeholder.com/50'}
+      alt="Chat"
+      className="rounded-circle me-3"
+      style={{ width: '50px', height: '50px' }}
+    />
+    <h5 className="mb-0">{chatName}</h5>
+  </div>
+
+  {/* Chat messages section - Scrollable */}
+  <div className="chat-messages flex-grow-1 overflow-auto p-3">
+    {messages.map((msg, index) => (
+      <div
+        key={index}
+        className={`message ${msg.sender === loggedInUser.name ? 'message-sent' : 'message-received'} d-flex`}
+      >
         <img
-          src={chatimage || 'https://via.placeholder.com/50'} // Display chat image or placeholder
-          alt="Chat"
-          className="rounded-circle me-3"
-          style={{ width: '50px', height: '50px' }}
+          src={msg.sender === loggedInUser.name ? loggedInUser.profileImage : chatimage}
+          alt={msg.sender}
+          className="rounded-circle me-2"
+          style={{ width: '40px', height: '40px' }}
         />
-        <h5 className="mb-0">{chatName}</h5>
-      </div>
-
-      {/* Chat messages section */}
-      <div className="chat-messages flex-grow-1 overflow-auto p-3">
-        {messages.map((msg, index) => (
-          <div
-            key={index}
-            className={`message ${msg.sender === loggedInUser.name ? 'message-sent' : 'message-received'} d-flex`}
-          >
-            <img
-              src={msg.sender === loggedInUser.name ? loggedInUser.profileImage : chatimage} // Use user image for logged-in user
-              alt={msg.sender}
-              className="rounded-circle me-2"
-              style={{ width: '40px', height: '40px' }}
-            />
-            <div className="message-content">
-              <p>{msg.content}</p>
-              <span className="message-time">{new Date(msg.time).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })}</span>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Chat input section */}
-      <div className="chat-input p-3 d-flex align-items-center">
-        <button
-          className="btn emoji-picker-button" onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-        >
-          😀
-        </button>
-        <input
-          type="text"
-          className="form-control me-2"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          placeholder="Type a message"
-          onKeyDown={handleKeyDown} // Attach the enter key listener
-        />
-        <button className="btn btn-success ms-2" onClick={sendMessage}>
-          Send
-        </button>
-      </div>
-
-      {/* Emoji Picker */}
-      {showEmojiPicker && (
-        <div className="emoji-picker-container">
-          <EmojiPicker onEmojiClick={(event, emojiObject) => handleEmojiClick(emojiObject)} />
+        <div className="message-content">
+          <p>{msg.content}</p>
+          <span className="message-time">{new Date(msg.time).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })}</span>
         </div>
-      )}
+      </div>
+    ))}
+  </div>
+
+  {/* Chat input section - Stuck at the bottom */}
+  <div className="chat-input p-3 d-flex align-items-center bg-light border-top">
+    <button className="btn emoji-picker-button" onClick={() => setShowEmojiPicker(!showEmojiPicker)}>
+      😀
+    </button>
+    <input
+      type="text"
+      className="form-control me-2"
+      value={message}
+      onChange={(e) => setMessage(e.target.value)}
+      placeholder="Type a message"
+      onKeyDown={handleKeyDown} // Attach the enter key listener
+    />
+    <button className="btn btn-success ms-2" onClick={sendMessage}>
+      Send
+    </button>
+  </div>
+
+  {/* Emoji Picker */}
+  {showEmojiPicker && (
+    <div className="emoji-picker-container">
+      <EmojiPicker onEmojiClick={(event, emojiObject) => handleEmojiClick(emojiObject)} />
     </div>
+  )}
+</div>
+
   );
 };
 
