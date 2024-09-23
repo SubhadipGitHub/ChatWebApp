@@ -6,13 +6,12 @@ import 'react-toastify/dist/ReactToastify.css';
 import { createAvatar } from '@dicebear/core';
 import { lorelei } from '@dicebear/collection';
 
-const ChatList = ({ chats, onChatSelect, loggedInUser, onLogout, onAddChat }) => {
+const ChatList = ({ chats, selectedChat,onChatSelect, loggedInUser, onLogout, onAddChat }) => {
   const [showUserModal, setShowUserModal] = useState(false); // Modal for logged-in user
   const [showChatModal, setShowChatModal] = useState(null); // Modal for chat details
   const [searchQuery, setSearchQuery] = useState(''); // State for search query
   const [showAddChatModal, setShowAddChatModal] = useState(false); // Modal for adding a chat
   const [newChatName, setNewChatName] = useState(''); // State for new chat name
-  const [selectedChat, setSelectedChat] = useState(null);
 
   // Function to handle modal open/close for logged-in user
   const handleShowUserModal = () => setShowUserModal(true);
@@ -114,7 +113,6 @@ const ChatList = ({ chats, onChatSelect, loggedInUser, onLogout, onAddChat }) =>
     chat.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  console.log(onChatSelect);
 
   return (
     <div className="chat-header chat-list-container p-3 d-flex flex-column" style={{ height: '100vh', borderRight: '1px solid #ddd' }}>
@@ -146,10 +144,12 @@ const ChatList = ({ chats, onChatSelect, loggedInUser, onLogout, onAddChat }) =>
         {filteredChats.length > 0 ? (
           filteredChats.map((chat, index) => (
             <div
-              key={index}
-              className={`list-group-item list-group-item-action d-flex align-items-center mb-2 border-0 rounded ${selectedChat === chat ? 'active-chat' : ''}`}
-              onClick={() => onChatSelect(chat)}
-            >
+            key={index}
+            className={`list-group-item list-group-item-action d-flex align-items-center mb-2 border-0 rounded ${
+              selectedChat && selectedChat.id === chat.id ? 'active-chat' : ''
+            }`}
+            onClick={() => onChatSelect(chat)}
+          >
               <div className="d-flex align-items-center me-3" onClick={(e) => { e.stopPropagation(); handleShowChatModal(index); }}>
                 {/* Render two participant avatars if chat.participants length is 2 */}
                 {chat.participants.length === 2 ? (
@@ -167,10 +167,10 @@ const ChatList = ({ chats, onChatSelect, loggedInUser, onLogout, onAddChat }) =>
                 </div>
                 ) : (
                   <img
-                    src={avatar}
+                    src={loggedInUser.avatarUrl}
                     alt="Chat avatar"
                     className="rounded-circle chat-list-image"
-                    style={{ width: '50px', height: '50px' }}
+                    style={{ width: '30px', height: '30px' }}
                   />
                 )}
               </div>
@@ -195,7 +195,7 @@ const ChatList = ({ chats, onChatSelect, loggedInUser, onLogout, onAddChat }) =>
           <div className="d-flex align-items-center" onClick={handleShowUserModal}>
             <div className="profile-image-wrapper">
               <img
-                src={loggedInUser.profileImage} // Use loggedInUser.image for user1 and chat.image for others
+                src={loggedInUser.avatarUrl} // Use loggedInUser.image for user1 and chat.image for others
                 alt={loggedInUser.name}
                 className="rounded-circle me-2 profile-image"
                 style={{ width: '40px', height: '40px' }}
@@ -271,7 +271,7 @@ const ChatList = ({ chats, onChatSelect, loggedInUser, onLogout, onAddChat }) =>
               <div className="modal-body text-center">
                 <div className="profile-image-wrapper-modal">
                   <img
-                    src={loggedInUser.profileImage || 'https://via.placeholder.com/150'}
+                    src={loggedInUser.avatarUrl || 'https://via.placeholder.com/150'}
                     alt="User Profile"
                     className="rounded-circle mb-3"
                     style={{ width: '100px', height: '100px', objectFit: 'cover' }}

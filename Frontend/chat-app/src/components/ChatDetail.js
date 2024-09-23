@@ -17,13 +17,20 @@ const ChatDetail = ({ chatId, chatName, chatimage, loggedInUser }) => {
   const [message, setMessage] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false); // State to show/hide emoji picker
   const [messages, setMessages] = useState([]); // State for chat messages
+  // In the component
+  const isConnected = useRef(false); // This ref will help track the connection status.
 
   // Create a reference to the chat messages container
   const chatMessagesRef = useRef(null);
 
   useEffect(() => {
-    // Join the chat room
-    socket.emit('joinChat', { chatId, username: loggedInUser.name });
+    if (!isConnected.current) {
+        // Join the chat room
+        socket.emit('joinChat', { chatId, username: loggedInUser.name });
+        socket.emit("join_room", chatId);
+        
+        isConnected.current = true; // Mark the socket as connected
+    }
 
     // Fetch existing messages
     const fetchMessages = async () => {
@@ -44,8 +51,6 @@ const ChatDetail = ({ chatId, chatName, chatimage, loggedInUser }) => {
     };
 
     fetchMessages();
-
-    socket.emit("join_room", chatId);
 
     // Listen for new messages
     const handleNewMessage = (msg) => {
@@ -100,6 +105,44 @@ const ChatDetail = ({ chatId, chatName, chatimage, loggedInUser }) => {
     }
   };
 
+  // Helper function to format the date
+const formatDate = (utcDate) => {
+  // Convert UTC date string to a local date
+  const messageDate = new Date(utcDate); // Parse the UTC date
+  const today = new Date(); // Get today's date in local time
+
+  // Create a new date for yesterday by setting the date to one day prior
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1); 
+
+  // Convert the dates to local date strings for comparison
+  const messageDateLocalString = messageDate.toLocaleDateString('en-US', { timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone });
+  const todayLocalString = today.toLocaleDateString('en-US', { timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone });
+  const yesterdayLocalString = yesterday.toLocaleDateString('en-US', { timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone });
+
+  // Debugging logs
+  console.log("Message Date (Local):", messageDate.toString());
+  console.log("Today (Local):", today.toString());
+  console.log("Yesterday (Local):", yesterday.toString());
+  console.log("Message Date Local String:", messageDateLocalString);
+  console.log("Today's Local Date String:", todayLocalString);
+  console.log("Yesterday's Local Date String:", yesterdayLocalString);
+
+  // Compare the local date equivalents
+  if (messageDateLocalString === todayLocalString) {
+    console.log("Date matches 'Today'");
+    return 'Today';
+  } else if (messageDateLocalString === yesterdayLocalString) {
+    console.log("Date matches 'Yesterday'");
+    return 'Yesterday';
+  } else {
+    const formattedDate = messageDate.toLocaleDateString(); // Format as per user's locale (MM/DD/YYYY or DD/MM/YYYY)
+    console.log("Formatted Date:", formattedDate);
+    return formattedDate;
+  }
+};
+
+
   return (
     <div className="chat-detail-container d-flex flex-column flex-grow-1">
   {/* Chat header - Stuck at the top */}
@@ -113,26 +156,54 @@ const ChatDetail = ({ chatId, chatName, chatimage, loggedInUser }) => {
     <h5 className="mb-0">{chatName}</h5>
   </div>
 
-  {/* Chat messages section - Scrollable */}
   <div className="chat-messages flex-grow-1 overflow-auto p-3" ref={chatMessagesRef}>
-    {messages.map((msg, index) => (
-      <div
-        key={index}
-        className={`message ${msg.sender === loggedInUser.name ? 'message-sent' : 'message-received'} d-flex`}
-      >
-        <img
-          src={msg.sender === loggedInUser.name ? loggedInUser.profileImage : chatimage}
-          alt={msg.sender}
-          className="rounded-circle me-2"
-          style={{ width: '40px', height: '40px' }}
-        />
-        <div className="message-content">
-          <p>{msg.content}</p>
-          <span className="message-time">{new Date(msg.time).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })}</span>
+  {messages.map((msg, index) => {
+    // Parse the current message time (stored in ISO UTC format)
+    const currentMessageDate = new Date(msg.time);
+
+    // Get the date label for the current message in local time
+    const currentDateLabel = formatDate(currentMessageDate);
+
+    // Check the previous message date (if it exists)
+    const previousMessageDate = index > 0 ? new Date(messages[index - 1].time) : null;
+    const previousDateLabel = previousMessageDate ? formatDate(previousMessageDate) : null;
+
+    // Check if we need to show the date separator
+    const showDateSeparator = index === 0 || currentDateLabel !== previousDateLabel;
+
+    return (
+      <div key={index}>
+        {showDateSeparator && (
+          <div className="date-separator text-center my-2">
+            <span className="badge bg-light text-dark">{currentDateLabel}</span>
+          </div>
+        )}
+
+        <div className={`message ${msg.sender === loggedInUser.name ? 'message-sent' : 'message-received'} d-flex`}>
+          <img
+            src={msg.sender === loggedInUser.name ? loggedInUser.avatarUrl : chatimage}
+            alt={msg.sender}
+            className="rounded-circle me-2"
+            style={{ width: '40px', height: '40px' }}
+          />
+          <div className="message-content">
+            <p>{msg.content}</p>
+            <span className="message-time">
+              {/* Format the UTC time to the user's local time */}
+              {currentMessageDate.toLocaleTimeString([], { 
+                hour: 'numeric', 
+                minute: '2-digit', 
+                hour12: true, 
+                timeZone: 'Asia/Kolkata' // Specify the exact time zone
+              })}
+            </span>
+          </div>
         </div>
       </div>
-    ))}
-  </div>
+    );
+  })}
+</div>
+
 
   {/* Chat input section - Stuck at the bottom */}
   <div className="chat-input p-3 d-flex align-items-center bg-light border-top">

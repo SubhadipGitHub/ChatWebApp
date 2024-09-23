@@ -32,11 +32,6 @@ sio = socketio.AsyncServer(
 # Store connected users in a set or a dictionary
 online_users = set()
 
-# Handle socket connection
-@sio.event
-async def connect(sid, environ):
-    print(f"User connected: {sid}")
-
 # Handle socket disconnection
 @sio.event
 async def disconnect(sid):
@@ -46,14 +41,21 @@ async def disconnect(sid):
         await sio.emit('user_offline', {'username': username[0]})
     print(f"User disconnected: {sid}")
 
-# Listen for custom event 'user_connected'
 @sio.event
 async def user_connected(sid, data):
-    print(f'{data} passed')
     username = data.get('username')
-    if username:
-        online_users.add((username, sid))
-        await sio.emit('user_online', {'username': username})
+    
+    # Check if the user already exists in the online_users set
+    for user, session_id in online_users:
+        if user == username:
+            # Disconnect the old session
+            await sio.disconnect(session_id)
+            online_users.remove((user, session_id))
+            break
+
+    # Add the new session for the user
+    online_users.add((username, sid))
+    await sio.emit('user_online', {'username': username})
 
 # Join a specific chat room
 @sio.event
@@ -100,6 +102,7 @@ async def register_user(user: User):
         "username": user.username,
         "password": hashed_password,
         "gender": user.gender,
+        "avatarUrl": user.avatarUrl,
         "creation_date": datetime.utcnow()
     }
     
@@ -129,12 +132,14 @@ async def login_user(username: str, password: str):
             detail="Invalid username or password",
         )
 
-    return {"message": "User logged successfully", "status": "success", "user": {"name": username, "profileImage": "https://vectorified.com/images/avatar-icon-png-24.png"}}
+    return {"message": "User logged successfully", "status": "success", "user": {"name": username, "avatarUrl": user['avatarUrl']}}
 
 # Create a new chat
 @app.post("/chats/", response_model=dict, summary="Create a new chat")
 async def create_chat(chat: ChatCreate, username: str = Depends(authenticate_user)):
-    chat_id = str('_'.join(chat.participants))
+    unique_chat_paticipants_list = list(set(chat.participants))
+    # print(unique_chat_paticipants_list)
+    chat_id = str('_'.join(unique_chat_paticipants_list))
     
     # Check if the chat with the same ID already exists
     existing_chat = await chat_collection.find_one({"_id": chat_id})
@@ -142,19 +147,19 @@ async def create_chat(chat: ChatCreate, username: str = Depends(authenticate_use
         raise HTTPException(status_code=400, detail="Chat with the same participants already exists.")
 
     # Check if all participants exist in the user_collection
-    for participant in chat.participants:
+    for participant in unique_chat_paticipants_list:
         user = await user_collection.find_one({"username": participant})
         if not user:
             raise HTTPException(status_code=404, detail=f"User '{participant}' does not exist.")
 
-    chat_name = str(' & '.join(chat.participants))
+    chat_name = str(' & '.join(unique_chat_paticipants_list))
     chat_image = f'https://ui-avatars.com/api/?name={chat_name}&background=random&color=fff&size=50'
     
     chat_data = {
         "_id": chat_id,
         "name": chat_name,
         "image": chat_image, 
-        "participants": chat.participants,
+        "participants": unique_chat_paticipants_list,
         "created_at": datetime.utcnow(),
         "created_by": username  # Add the created_by field
     }
@@ -188,7 +193,7 @@ async def get_user_chats(
     }
     excludcols={"messages":0}
     chats = await chat_collection.find(query,excludcols).skip(skip).limit(limit).to_list(length=limit)
-    print(chats)
+    #print(chats)
     return chats
 
 # Entry point for running the server

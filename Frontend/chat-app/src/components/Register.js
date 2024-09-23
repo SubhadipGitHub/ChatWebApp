@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom'; // For redirecting and navigation link
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import './Register.css'; // Import custom CSS
 
 const Register = () => {
   const [username, setUsername] = useState('');
@@ -9,7 +10,17 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState(''); // Added confirmPassword state
   const [gender, setGender] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('https://api.multiavatar.com/generic12.png'); // State to hold the generated avatar URL
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Generate avatar URL when username or gender changes
+    if (username && gender) {
+      const randomNo = Math.floor(Math.random() * 1000); // Generate random number
+      const newAvatarUrl = `https://api.multiavatar.com/${gender.toLowerCase()}-${username}-${randomNo}.png`;
+      setAvatarUrl(newAvatarUrl);
+    }
+  }, [username, gender]);
 
   // Email validation function
   const validateEmail = (email) => {
@@ -43,7 +54,7 @@ const Register = () => {
     const response = await fetch('http://localhost:8000/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, email, password, gender }),
+      body: JSON.stringify({ username, email, password, gender,avatarUrl }),
     });
     const data = await response.json();
     
@@ -60,7 +71,19 @@ const Register = () => {
   return (
     <div className="container d-flex justify-content-center mt-5">
       <div className="card shadow-lg p-4" style={{ width: '400px' }}>
-        <h2 className="card-title text-center mb-4">Create an Account</h2>
+        <h2 className="card-title text-center mb-4">Create an Account</h2>  
+        <hr></hr>   
+
+        {/* Avatar Image Preview */}
+        {avatarUrl && (
+          <div className="register-image-avatar text-center mb-3">
+            <img
+              src={avatarUrl}
+              alt="Avatar"
+              style={{ width: '100px', height: '100px', borderRadius: '50%' }}
+            />
+          </div>
+        )}   
 
         <div className="mb-3">
           <input
@@ -137,7 +160,7 @@ const Register = () => {
               Female
             </label>
           </div>
-        </div>
+        </div>        
 
         <button className="btn btn-primary w-100 mb-3" onClick={handleRegister}>
           Register

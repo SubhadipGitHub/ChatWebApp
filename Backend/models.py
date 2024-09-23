@@ -18,3 +18,4 @@ class User(BaseModel):
     username: str
     password: str
     gender: str
+    avatarUrl: str

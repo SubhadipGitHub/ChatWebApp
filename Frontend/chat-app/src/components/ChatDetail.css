@@ -175,3 +175,15 @@
   border-radius: 15px 15px 0px 15px; /* Rounded corners (slightly different) */
   border: 1px solid black;
 }
+
+.date-separator {
+  margin: 10px 0;
+}
+
+.date-separator .badge {
+  font-size: 0.85rem;
+  background-color: #f0f0f0;
+  color: #555;
+  padding: 5px 10px;
+  border-radius: 12px;
+}

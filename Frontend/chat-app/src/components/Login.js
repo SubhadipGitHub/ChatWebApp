@@ -42,7 +42,7 @@ const Login = () => {
     <div className="container d-flex justify-content-center mt-5">
       <div className="card shadow-lg p-4" style={{ width: '400px' }}>
         <h2 className="card-title text-center mb-4">Welcome Back</h2>
-        
+        <hr></hr> 
         <div className="mb-3">
           <input
             type="text"
