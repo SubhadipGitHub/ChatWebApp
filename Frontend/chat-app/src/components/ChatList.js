@@ -1,4 +1,4 @@
-import React, { useState,useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import '@fortawesome/fontawesome-free/css/all.min.css'; // Import FontAwesome CSS
 import './ChatList.css'; // Import custom CSS
 import { toast } from 'react-toastify';
@@ -124,7 +124,7 @@ const ChatList = ({ chats, onChatSelect, loggedInUser, onLogout, onAddChat }) =>
           <i className="fas fa-comments me-2 text-primary chat-icon"></i> Chats
         </h5>
         {/* Add Chat Button */}
-        <button className="btn btn-primary" onClick={handleShowAddChatModal}>
+        <button className="btn btn-success" onClick={handleShowAddChatModal}>
           <i className="fas fa-plus me-2"></i> Add Chat
         </button>
       </div>
@@ -147,16 +147,32 @@ const ChatList = ({ chats, onChatSelect, loggedInUser, onLogout, onAddChat }) =>
           filteredChats.map((chat, index) => (
             <div
               key={index}
-              className={`list-group-item list-group-item-action d-flex align-items-center mb-2 border-0 rounded ${selectedChat === chat ? 'active-chat' : ''}`} 
+              className={`list-group-item list-group-item-action d-flex align-items-center mb-2 border-0 rounded ${selectedChat === chat ? 'active-chat' : ''}`}
               onClick={() => onChatSelect(chat)}
             >
               <div className="d-flex align-items-center me-3" onClick={(e) => { e.stopPropagation(); handleShowChatModal(index); }}>
-              <img
-                src={avatar} // Use the memoized avatar
-                alt={`${chat.name} avatar`}
-                className="rounded-circle chat-list-image"
-                style={{ width: '50px', height: '50px' }}
-              />
+                {/* Render two participant avatars if chat.participants length is 2 */}
+                {chat.participants.length === 2 ? (
+                  <div className="chat-avatar-container">
+                  <img
+                    src={chat.participants[0].avatar || avatar}
+                    alt={`${chat.participants[0].name} avatar`}
+                    className="chat-avatar chat-avatar-1"
+                  />
+                  <img
+                    src={chat.participants[1].avatar || avatar}
+                    alt={`${chat.participants[1].name} avatar`}
+                    className="chat-avatar chat-avatar-2"
+                  />
+                </div>
+                ) : (
+                  <img
+                    src={avatar}
+                    alt="Chat avatar"
+                    className="rounded-circle chat-list-image"
+                    style={{ width: '50px', height: '50px' }}
+                  />
+                )}
               </div>
               <div className="w-100">
                 <h6 className="mb-1">{chat.name}</h6>
@@ -171,6 +187,7 @@ const ChatList = ({ chats, onChatSelect, loggedInUser, onLogout, onAddChat }) =>
           <p>No chats found</p>
         )}
       </div>
+
 
       {/* Logged-in user profile section */}
       <div className="user-profile-section mt-3">
@@ -252,14 +269,14 @@ const ChatList = ({ chats, onChatSelect, loggedInUser, onLogout, onAddChat }) =>
                 ></button>
               </div>
               <div className="modal-body text-center">
-              <div className="profile-image-wrapper-modal">
-                <img
-                  src={loggedInUser.profileImage || 'https://via.placeholder.com/150'}
-                  alt="User Profile"
-                  className="rounded-circle mb-3"
-                  style={{ width: '100px', height: '100px', objectFit: 'cover' }}
-                />
-                <span className="online-badge-modal"></span>
+                <div className="profile-image-wrapper-modal">
+                  <img
+                    src={loggedInUser.profileImage || 'https://via.placeholder.com/150'}
+                    alt="User Profile"
+                    className="rounded-circle mb-3"
+                    style={{ width: '100px', height: '100px', objectFit: 'cover' }}
+                  />
+                  <span className="online-badge-modal"></span>
                 </div>
                 <p><strong>Name:</strong> {loggedInUser.name}</p>
                 <p><strong>Created At:</strong> Jan 1, 2022</p> {/* Dummy data */}

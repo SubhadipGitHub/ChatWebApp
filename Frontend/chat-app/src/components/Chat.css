@@ -17,14 +17,10 @@
   /* Full height */
   border: 1px solid #dee2e6;
   /* Bootstrap border color */
-  border-radius: 10px;
-  /* Increased rounding for smoother appearance */
-  overflow-y: auto;
+  background-color: white;
   /* Enable vertical scrolling */
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   /* Subtle shadow for depth */
-  background-color: lightblue;
-  /* Light background color for the container */
   transition: all 0.3s ease-in-out;
 }
 

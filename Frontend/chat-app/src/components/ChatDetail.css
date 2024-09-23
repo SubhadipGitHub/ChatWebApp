@@ -40,7 +40,6 @@
 }
 
 .message-content {
-    background-color: #f1f1f1; /* Light background for messages */
     border-radius: 15px 15px 0px 15px; /* Rounded corners (slightly different) */
     padding: 5px 10px; /* Increased padding for comfort */
     max-width: 70%; /* Limit width of messages */
@@ -142,7 +141,6 @@
 
 /* Chat Header - Fixed at the top */
 .chat-header {
-  position: sticky;
   top: 0;
   z-index: 1030;
   background-color: #f8f9fa;
@@ -154,7 +152,6 @@
   flex-grow: 1;
   overflow-y: auto; /* Makes messages scrollable */
   padding: 1rem;
-  background-color: lightblue;
 }
 
 /* Chat Input - Fixed at the bottom */

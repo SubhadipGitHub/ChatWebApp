@@ -147,7 +147,7 @@ async def create_chat(chat: ChatCreate, username: str = Depends(authenticate_use
         if not user:
             raise HTTPException(status_code=404, detail=f"User '{participant}' does not exist.")
 
-    chat_name = str('-'.join(chat.participants))
+    chat_name = str(' & '.join(chat.participants))
     chat_image = f'https://ui-avatars.com/api/?name={chat_name}&background=random&color=fff&size=50'
     
     chat_data = {
