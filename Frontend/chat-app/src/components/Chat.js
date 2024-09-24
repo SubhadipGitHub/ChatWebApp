@@ -15,6 +15,39 @@ const ChatPage = () => {
   const [loggedInUser, setLoggedInUser] = useState({});
   const [onlineUsers, setOnlineUsers] = useState([]);
 
+  // Fetch chats after confirming the user is logged in
+  const fetchChats = async () => {
+    try {
+      const username = localStorage.getItem('username');
+      const password = localStorage.getItem('password');
+      const baseURI = 'http://localhost:8000';
+      const endpoint = `${baseURI}/chats?user_id=${encodeURIComponent(username)}`;
+
+      const response = await fetch(endpoint, {
+        method: 'GET',
+        headers: {
+          'Authorization': 'Basic ' + btoa(`${username}:${password}`)
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch chats');
+      }
+
+      const data = await response.json();
+      const formattedChats = data.map(chat => ({
+        id: chat._id,
+        name: chat.name,
+        image: chat.image,
+        participants: chat.participants || [],
+      }));
+
+      setChats(formattedChats);
+    } catch (error) {
+      console.error('Error fetching chats:', error);
+    }
+  };
+
   useEffect(() => {
     // Fetch logged-in user from localStorage
     const user = localStorage.getItem('user');
@@ -53,38 +86,7 @@ const ChatPage = () => {
         });
       }
 
-      // Fetch chats after confirming the user is logged in
-      const fetchChats = async () => {
-        try {
-          const username = localStorage.getItem('username');
-          const password = localStorage.getItem('password');
-          const baseURI = 'http://localhost:8000';
-          const endpoint = `${baseURI}/chats?user_id=${encodeURIComponent(username)}`;
-
-          const response = await fetch(endpoint, {
-            method: 'GET',
-            headers: {
-              'Authorization': 'Basic ' + btoa(`${username}:${password}`)
-            },
-          });
-
-          if (!response.ok) {
-            throw new Error('Failed to fetch chats');
-          }
-
-          const data = await response.json();
-          const formattedChats = data.map(chat => ({
-            id: chat._id,
-            name: chat.name,
-            image: chat.image,
-            participants: chat.participants || [],
-          }));
-
-          setChats(formattedChats);
-        } catch (error) {
-          console.error('Error fetching chats:', error);
-        }
-      };
+      
 
       fetchChats();
 
@@ -109,10 +111,15 @@ const ChatPage = () => {
     setSelectedChat(chat);
   };
 
+  const handleAddChatToList = (newChat) => {
+    setChats((prevChats) => [...prevChats, newChat]); // Add the new chat dynamically
+    fetchChats();
+  };
+
   return (
     <div className="chat-page-container">
       <div className="chat-list-container">
-        <ChatList chats={chats} onChatSelect={handleChatSelect} loggedInUser={loggedInUser} selectedChat={selectedChat} />
+        <ChatList chats={chats} onChatSelect={handleChatSelect} loggedInUser={loggedInUser} selectedChat={selectedChat} onAddChat={handleAddChatToList} />
       </div>
 
       <div className={`chat-detail-container ${selectedChat ? 'active' : ''}`}>

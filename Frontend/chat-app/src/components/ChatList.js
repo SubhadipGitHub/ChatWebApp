@@ -56,6 +56,10 @@ const ChatList = ({ chats, selectedChat,onChatSelect, loggedInUser, onLogout, on
         const baseURI = 'http://localhost:8000'; // You can change this as needed
         const endpoint = `${baseURI}/chats/`; // Complete endpoint
 
+        //chat participants
+        const chatparticipants = [username,newChatName];
+        console.log(chatparticipants)
+
         const response = await fetch(endpoint, {
           method: 'POST',
           headers: {
@@ -63,7 +67,7 @@ const ChatList = ({ chats, selectedChat,onChatSelect, loggedInUser, onLogout, on
             'Authorization': 'Basic ' + btoa(`${username}:${password}`) // Basic auth
           },
           body: JSON.stringify({
-            participants: [newChatName, username] // Add the participants as needed
+            participants: chatparticipants // Add the participants as needed
           }),
         });
 
@@ -85,7 +89,8 @@ const ChatList = ({ chats, selectedChat,onChatSelect, loggedInUser, onLogout, on
 
         const data = await response.json();
         console.log('New chat created with ID:', data.chat_id);
-        // onAddChat(newChatName); // Call the parent function to add the chat
+        // Call the parent function to add the chat to the list dynamically
+        onAddChat({ id: data.chat_id, name: data.name ,participants:data.participants,image:data.image});
         setNewChatName(''); // Clear the input field
         handleCloseAddChatModal(); // Close the modal
         toast.success('Chat added successfully!', {

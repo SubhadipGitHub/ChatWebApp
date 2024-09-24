@@ -138,13 +138,19 @@ async def login_user(username: str, password: str):
 @app.post("/chats/", response_model=dict, summary="Create a new chat")
 async def create_chat(chat: ChatCreate, username: str = Depends(authenticate_user)):
     unique_chat_paticipants_list = list(set(chat.participants))
-    # print(unique_chat_paticipants_list)
+    print(unique_chat_paticipants_list)
     chat_id = str('_'.join(unique_chat_paticipants_list))
     
-    # Check if the chat with the same ID already exists
-    existing_chat = await chat_collection.find_one({"_id": chat_id})
+    # Check if the chat with the same participants already exists
+    query = {
+        "participants": {
+        "$all": unique_chat_paticipants_list,         # Ensure all participants are in the array
+        "$size": len(unique_chat_paticipants_list)  # Ensure the length of the array matches the number of participants
+    }
+    }
+    existing_chat = await chat_collection.find_one(query)
     if existing_chat:
-        raise HTTPException(status_code=400, detail="Chat with the same participants already exists.")
+        raise HTTPException(status_code=400, detail=f"Chat {existing_chat['name']} with the same participants already exists.")
 
     # Check if all participants exist in the user_collection
     for participant in unique_chat_paticipants_list:
@@ -165,7 +171,7 @@ async def create_chat(chat: ChatCreate, username: str = Depends(authenticate_use
     }
     
     new_chat = await chat_collection.insert_one(chat_data)
-    return {"chat_id": str(new_chat.inserted_id)}
+    return {"chat_id": str(new_chat.inserted_id),"name":chat_name,"participants":unique_chat_paticipants_list,"image": chat_image}
 
 # Fetch messages for a specific chat room (endpoint example)
 @app.get("/chats/{chat_id}/messages")
