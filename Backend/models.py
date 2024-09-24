@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List,Optional
 
 class ChatCreate(BaseModel):
@@ -19,3 +19,18 @@ class User(BaseModel):
     password: str
     gender: str
     avatarUrl: str
+
+# User Model update
+class UserUpdateModel(BaseModel):
+    online_status: str = Field(..., example="Online")
+    about_me: str = Field(..., example="This is my updated about me section.")
+    timezone: str = Field(..., example="GMT")
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "online_status": "Online",
+                "about_me": "Updated about me section.",
+                "timezone": "PST",
+            }
+        }

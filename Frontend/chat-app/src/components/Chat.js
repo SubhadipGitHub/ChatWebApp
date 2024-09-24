@@ -6,8 +6,8 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { io } from 'socket.io-client';
 
-// Initialize the socket connection once outside the component
-let socket;
+// Initialize the socket connection outside the component to ensure only one instance
+let socket = null;
 
 const ChatPage = () => {
   const [chats, setChats] = useState([]);
@@ -49,14 +49,13 @@ const ChatPage = () => {
   };
 
   useEffect(() => {
-    // Fetch logged-in user from localStorage
     const user = localStorage.getItem('user');
 
     if (user) {
       const parsedUser = JSON.parse(user);
       setLoggedInUser(parsedUser);
 
-      // Initialize the socket only if it's not already connected
+      // Ensure socket is only initialized once
       if (!socket) {
         socket = io("http://localhost:8000", {
           path: "/socket.io/",
@@ -86,8 +85,6 @@ const ChatPage = () => {
         });
       }
 
-      
-
       fetchChats();
 
     } else {
@@ -105,7 +102,6 @@ const ChatPage = () => {
       }
     };
   }, []);  // Empty dependency ensures it runs only once
-
 
   const handleChatSelect = (chat) => {
     setSelectedChat(chat);

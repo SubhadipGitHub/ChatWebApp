@@ -5,7 +5,7 @@ import socketio
 from typing import List, Optional
 from auth import create_user, authenticate_user, get_user_by_id, hash_password, verify_password
 from db import chat_collection, user_collection
-from models import Chat, Message, User,ChatCreate
+from models import Chat, Message, User,ChatCreate,UserUpdateModel
 from bson.objectid import ObjectId
 from datetime import datetime
 
@@ -22,6 +22,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+#user default value
+aboutme_value="I am a Dummy!!"
 
 # Socket.IO Server
 sio = socketio.AsyncServer(
@@ -63,15 +66,18 @@ async def join_room(sid, chat_id):
     await sio.enter_room(sid, chat_id)  # Await the coroutine
     print(f"User {sid} joined room {chat_id}")
 
-# Handle message sending to a specific room
 @sio.event
 async def message(sid, data):
-    #print(data)
+    # Get the current UTC time, set microseconds to 0, and format as ISO
+    current_utc_time = datetime.utcnow().replace(microsecond=0)
+    # Convert to ISO 8601 format with 'Z' (for UTC)
+    iso_utc_time = current_utc_time.isoformat() + 'Z'
+
     chat_id = data['chat_id']
     message_data = {
         'content': data['content'],
         'sender': data['sender'],
-        'time': datetime.utcnow().isoformat()  # Convert to ISO string
+        'time': iso_utc_time  # Convert to ISO string
     }
 
     # Save message in MongoDB
@@ -80,9 +86,10 @@ async def message(sid, data):
         {"$push": {"messages": message_data}}
     )
 
-    message_data['chat_id']=chat_id
-    # Emit the message to everyone in the room
-    await sio.emit("new_message", message_data, room=chat_id)
+    message_data['chat_id'] = chat_id
+
+    # Emit the message to all connected clients without using rooms
+    await sio.emit("new_message", message_data)
 
 app.mount("/socket.io/", socketio.ASGIApp(sio))
 
@@ -95,10 +102,13 @@ async def register_user(user: User):
     if existing_user:
         raise HTTPException(status_code=400, detail="Username already registered")
     
-    hashed_password = hash_password(user.password)
+    hashed_password = hash_password(user.password)    
     
     user_data = {
         "email": user.email,
+        "online_status":"ONLINE",
+        "timezone":"IST",
+        "aboutme":aboutme_value,
         "username": user.username,
         "password": hashed_password,
         "gender": user.gender,
@@ -132,13 +142,34 @@ async def login_user(username: str, password: str):
             detail="Invalid username or password",
         )
 
-    return {"message": "User logged successfully", "status": "success", "user": {"name": username, "avatarUrl": user['avatarUrl']}}
+    return {"message": "User logged successfully",
+             "status": "success",
+               "user": 
+               {"name": username,
+                 "avatarUrl": user['avatarUrl'],
+                 "online_status":user['online_status'],
+        "timezone":user['timezone'],
+        "aboutme":user['aboutme']}}
+
+@app.put("/users/{user_id}", response_model=dict)
+async def update_user(user_id: str, user_data: UserUpdateModel):
+
+    # Update the user document with the new data
+    update_result = await user_collection.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": user_data.dict()}
+    )
+
+    if update_result.modified_count == 0:
+        raise HTTPException(status_code=400, detail="Failed to update user")
+
+    return {"message": "User updated successfully"}
 
 # Create a new chat
 @app.post("/chats/", response_model=dict, summary="Create a new chat")
 async def create_chat(chat: ChatCreate, username: str = Depends(authenticate_user)):
     unique_chat_paticipants_list = list(set(chat.participants))
-    print(unique_chat_paticipants_list)
+    #print(unique_chat_paticipants_list)
     chat_id = str('_'.join(unique_chat_paticipants_list))
     
     # Check if the chat with the same participants already exists
@@ -175,7 +206,7 @@ async def create_chat(chat: ChatCreate, username: str = Depends(authenticate_use
 
 # Fetch messages for a specific chat room (endpoint example)
 @app.get("/chats/{chat_id}/messages")
-async def get_chat_messages(chat_id: str, skip: int = 0, limit: int = 10, username: str = Depends(authenticate_user)):
+async def get_chat_messages(chat_id: str, skip: int = 0, limit: int = 100, username: str = Depends(authenticate_user)):
     chat = await chat_collection.find_one({"_id": chat_id})
     if not chat:
         raise HTTPException(status_code=404, detail="Chat not found")
@@ -188,7 +219,7 @@ async def get_chat_messages(chat_id: str, skip: int = 0, limit: int = 10, userna
 async def get_user_chats(
     user_id: str,
     skip: Optional[int] = Query(0, ge=0),  # Default to 0, must be >= 0
-    limit: Optional[int] = Query(10, ge=1, le=100),  # Default to 10, must be between 1 and 100
+    limit: Optional[int] = Query(100, ge=1, le=100),  # Default to 10, must be between 1 and 100
     username: str = Depends(authenticate_user)
 ):
     # Query to find documents where the username is in the participants array
