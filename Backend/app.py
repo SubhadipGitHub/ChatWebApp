@@ -68,21 +68,28 @@ async def join_room(sid, chat_id):
 
 @sio.event
 async def message(sid, data):
+    print(data)
     # Get the current UTC time, set microseconds to 0, and format as ISO
     current_utc_time = datetime.utcnow().replace(microsecond=0)
     # Convert to ISO 8601 format with 'Z' (for UTC)
     iso_utc_time = current_utc_time.isoformat() + 'Z'
 
     chat_id = data['chat_id']
+    chat_receipients = data['chatparticipants']
+    #print(chat_participants)
+    chat_receipients.remove(data['sender'])
+    #print(receiver)
     message_data = {
         'content': data['content'],
         'sender': data['sender'],
+        'receiver': chat_receipients,
         'time': iso_utc_time  # Convert to ISO string
     }
-
+    #print(message_data)
+    update_query = {"_id": chat_id}
     # Save message in MongoDB
     await chat_collection.update_one(
-        {"_id": chat_id},
+        update_query,
         {"$push": {"messages": message_data}}
     )
 

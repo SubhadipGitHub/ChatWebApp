@@ -43,6 +43,11 @@ const ChatPage = () => {
       }));
 
       setChats(formattedChats);
+
+      // Set the first chat as the selected chat if any exist
+      if (formattedChats.length > 0) {
+        setSelectedChat(formattedChats[0]);
+      }
     } catch (error) {
       console.error('Error fetching chats:', error);
     }
@@ -97,7 +102,7 @@ const ChatPage = () => {
         socket.off('connect');
         socket.off('user_online');
         socket.off('user_offline');
-        socket.disconnect(); // Disconnect the socket
+        //socket.disconnect(); // Disconnect the socket
         socket = null; // Clear the socket variable to prevent reinitialization
       }
     };
@@ -125,6 +130,7 @@ const ChatPage = () => {
             chatimage={selectedChat.image}
             chatName={selectedChat.name}
             loggedInUser={loggedInUser}
+            chatparticipants={selectedChat.participants}
           />
         )}
       </div>

@@ -12,10 +12,17 @@ const socket = io("http://localhost:8000", {
   timeout: 5000 // Timeout in milliseconds
 });
 
+// You can import the sound file or reference it from the public folder
+const notificationSound = new Audio('/noti_sound.mp3'); // Change to your sound file path
+
+const playSound = () => {
+  notificationSound.play();
+};
+
 const username = localStorage.getItem('username'); // Get username from local storage
 const password = localStorage.getItem('password'); // Get password from local storage
 
-const ChatDetail = ({ chatId, chatName, chatimage, loggedInUser }) => {
+const ChatDetail = ({ chatId, chatName, chatimage, chatparticipants, loggedInUser }) => {
   const [message, setMessage] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false); // State to show/hide emoji picker
   const [messages, setMessages] = useState([]); // State for chat messages
@@ -55,14 +62,42 @@ const ChatDetail = ({ chatId, chatName, chatimage, loggedInUser }) => {
     fetchMessages();
 
     const handleNewMessage = (msg) => {
+      console.log(msg);
+      console.log(loggedInUser.name);
+      if (Array.isArray(msg.receiver) && msg.receiver.includes(loggedInUser.name)) {        
+        //console.log(chatId);
+        if (msg.chat_id !== chatId) {
+          // Strip the message content to the first 50 characters
+          const truncatedContent = msg.content.length > 50 
+          ? msg.content.slice(0, 100) + '...' 
+          : msg.content;
+          const received_msg = `${truncatedContent}`;
+        //console.log(received_msg);
+          playSound(); // Play the sound when the toast is triggered
+          toast.success(
+            <div style={{ padding: '10px', lineHeight: '1.5' }}>
+              <h4 style={{ margin: '0 0 8px 0', color: '#fff', fontWeight: 'bold' }}>{msg.sender}</h4>
+              <p style={{ margin: '0', color: '#f0f0f0' }}>{received_msg}</p>
+            </div>,
+            {
+              position: 'top-right',
+              autoClose: 5000, // Closes after 5 seconds
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              style: {
+                backgroundColor: '#333', // Dark background color
+                color: '#fff', // White text
+                borderRadius: '8px', // Rounded corners
+                boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)', // Subtle shadow
+              },
+              icon: false, // Disable default icon, you can add your own below if needed
+            }
+          );
+        }
+      }
       if (msg.chat_id === chatId) {
         setMessages((prevMessages) => [...prevMessages, msg]);
-        if (msg.sender !== loggedInUser.name) {
-          toast.success('Message received!', {
-            position: 'top-right',
-            autoClose: 2000,
-          });
-        }
       }
     };
 
@@ -88,6 +123,7 @@ const ChatDetail = ({ chatId, chatName, chatimage, loggedInUser }) => {
         chat_id: chatId,
         content: message,
         sender: loggedInUser.name,
+        chatparticipants: chatparticipants,
       };
       socket.emit("message", messageData);
       setMessage(''); // Clear input after sending
