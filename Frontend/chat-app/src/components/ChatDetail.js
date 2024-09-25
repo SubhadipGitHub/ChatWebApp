@@ -16,20 +16,46 @@ const socket = io("http://localhost:8000", {
 const notificationSound = new Audio('/noti_sound.mp3'); // Change to your sound file path
 
 const playSound = () => {
-  notificationSound.play();
+  // Attempt to play the sound and handle any potential errors
+  notificationSound.play().catch(error => {
+    console.error('Playback failed:', error);
+  });
 };
 
 const username = localStorage.getItem('username'); // Get username from local storage
 const password = localStorage.getItem('password'); // Get password from local storage
 
-const ChatDetail = ({ chatId, chatName, chatimage, chatparticipants, loggedInUser }) => {
+const ChatDetail = ({ chatId, chatName, chatimage, chatparticipants, loggedInUser, onlineusers }) => {
   const [message, setMessage] = useState('');
+  const [onlinestatus, setOnlineStatus] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false); // State to show/hide emoji picker
   const [messages, setMessages] = useState([]); // State for chat messages
   const isConnected = useRef(false); // Track connection status
+  var receivername = '';
+
+  console.log(onlineusers);
+  //receivername
+  // Remove the element with same name as loggeduser
+  if (chatparticipants.length > 1) {
+  const receiverArray = chatparticipants.filter(item => item !== loggedInUser.name);
+  receivername = receiverArray.toString();
+  }
+  else{
+    receivername = chatparticipants.toString();
+  }
+  
 
   // Create a reference to the chat messages container
   const chatMessagesRef = useRef(null);
+
+  // Update online status
+  useEffect(() => {
+    if (onlineusers.find(item => item === receivername)) {
+      setOnlineStatus(true);
+    } else {
+      setOnlineStatus(false);  // Ensure the status is updated correctly
+    }
+  }, [onlineusers, receivername]);  // Add `receivername` as a dependency
 
   // Fetch existing messages whenever the chatId changes
   useEffect(() => {
@@ -64,15 +90,15 @@ const ChatDetail = ({ chatId, chatName, chatimage, chatparticipants, loggedInUse
     const handleNewMessage = (msg) => {
       console.log(msg);
       console.log(loggedInUser.name);
-      if (Array.isArray(msg.receiver) && msg.receiver.includes(loggedInUser.name)) {        
+      if (Array.isArray(msg.receiver) && msg.receiver.includes(loggedInUser.name)) {
         //console.log(chatId);
         if (msg.chat_id !== chatId) {
           // Strip the message content to the first 50 characters
-          const truncatedContent = msg.content.length > 50 
-          ? msg.content.slice(0, 100) + '...' 
-          : msg.content;
+          const truncatedContent = msg.content.length > 50
+            ? msg.content.slice(0, 50) + '...'
+            : msg.content;
           const received_msg = `${truncatedContent}`;
-        //console.log(received_msg);
+          //console.log(received_msg);
           playSound(); // Play the sound when the toast is triggered
           toast.success(
             <div style={{ padding: '10px', lineHeight: '1.5' }}>
@@ -170,7 +196,19 @@ const ChatDetail = ({ chatId, chatName, chatimage, chatparticipants, loggedInUse
           className="chat-detail-image rounded-circle me-3"
           style={{ width: '50px', height: '50px' }}
         />
-        <h5 className="mb-0">{chatName}</h5>
+        <div className="chat-header-info">
+          <h5 className="mb-0">{receivername}</h5>
+          {/* Online status */}
+          <div className="d-flex align-items-center mt-1">
+            <span
+              className={`me-1 rounded-circle ${onlinestatus ? 'bg-success' : 'bg-secondary'}`}
+              style={{ width: '8px', height: '8px' }}
+            />
+            <span className={`text-${onlinestatus ? 'success' : 'muted'} small`}>
+              {onlinestatus ? 'Online' : 'Offline'}
+            </span>
+          </div>
+        </div>
       </div>
 
       <div className="chat-messages flex-grow-1 overflow-auto p-3" ref={chatMessagesRef}>
@@ -217,12 +255,13 @@ const ChatDetail = ({ chatId, chatName, chatimage, chatparticipants, loggedInUse
         <button className="emoji-picker-button" onClick={() => setShowEmojiPicker(!showEmojiPicker)}>
           😀
         </button>
-        <input
+        <textarea
           type="text"
           className="form-control me-2"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           placeholder="Type a message"
+          maxLength="200"
           onKeyDown={handleKeyDown}
         />
         <button className="btn btn-success ms-2" onClick={sendMessage}>

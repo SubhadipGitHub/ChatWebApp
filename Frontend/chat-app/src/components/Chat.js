@@ -40,6 +40,7 @@ const ChatPage = () => {
         name: chat.name,
         image: chat.image,
         participants: chat.participants || [],
+        latestMessage:chat.latestMessage
       }));
 
       setChats(formattedChats);
@@ -78,20 +79,21 @@ const ChatPage = () => {
           if (parsedUser.name !== data.username) {
             toast.success(`${data.username} is online!`);
           }
-          setOnlineUsers((prevOnlineUsers) => [...prevOnlineUsers, data.username]);
+          // Update the onlineUsers state with the list returned from data.online_users
+          setOnlineUsers(data.online_users);
+          console.log(`${data.username} is online`);
         });
 
         // Listen for users going offline
         socket.on('user_offline', (data) => {
           toast.warn(`${data.username} is offline!`);
-          setOnlineUsers((prevOnlineUsers) => 
-            prevOnlineUsers.filter(user => user !== data.username)
-          );
+          // Update the onlineUsers state with the list returned from data.online_users
+          setOnlineUsers(data.online_users);
+          console.log(`${data.username} is offline`);
         });
       }
 
-      fetchChats();
-
+      fetchChats();  // Assuming this is a function to fetch chats
     } else {
       console.warn("User is not logged in. Socket connection will not be established.");
     }
@@ -102,8 +104,7 @@ const ChatPage = () => {
         socket.off('connect');
         socket.off('user_online');
         socket.off('user_offline');
-        //socket.disconnect(); // Disconnect the socket
-        socket = null; // Clear the socket variable to prevent reinitialization
+        socket = null;  // Clear the socket variable to prevent reinitialization
       }
     };
   }, []);  // Empty dependency ensures it runs only once
@@ -130,6 +131,7 @@ const ChatPage = () => {
             chatimage={selectedChat.image}
             chatName={selectedChat.name}
             loggedInUser={loggedInUser}
+            onlineusers={onlineUsers}
             chatparticipants={selectedChat.participants}
           />
         )}

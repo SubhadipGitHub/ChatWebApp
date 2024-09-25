@@ -3,11 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import socketio
 from typing import List, Optional
-from auth import create_user, authenticate_user, get_user_by_id, hash_password, verify_password
+from auth import create_user, authenticate_user, hash_password, verify_password,find_user_by_username
 from db import chat_collection, user_collection
 from models import Chat, Message, User,ChatCreate,UserUpdateModel
 from bson.objectid import ObjectId
 from datetime import datetime
+from pymongo import ASCENDING, DESCENDING
 
 app = FastAPI()
 
@@ -34,15 +35,20 @@ sio = socketio.AsyncServer(
 
 # Store connected users in a set or a dictionary
 online_users = set()
+online_user_list = []
 
 # Handle socket disconnection
 @sio.event
 async def disconnect(sid):
     username = [user for user, session_id in online_users if session_id == sid]
+    #print(online_users)
     if username:
+        #print(f'{username[0]} and session id {sid}')
         online_users.remove((username[0], sid))
-        await sio.emit('user_offline', {'username': username[0]})
-    print(f"User disconnected: {sid}")
+        online_user_list = [item[0] for item in online_users]
+        #print(f'Online user list {online_user_list} when disconnection of {username[0]}')
+        await sio.emit('user_offline', {'username': username[0],'online_users':online_user_list})
+    #print(f"User disconnected: {sid}")
 
 @sio.event
 async def user_connected(sid, data):
@@ -58,13 +64,9 @@ async def user_connected(sid, data):
 
     # Add the new session for the user
     online_users.add((username, sid))
-    await sio.emit('user_online', {'username': username})
-
-# Join a specific chat room
-@sio.event
-async def join_room(sid, chat_id):
-    await sio.enter_room(sid, chat_id)  # Await the coroutine
-    print(f"User {sid} joined room {chat_id}")
+    online_user_list = [item[0] for item in online_users]
+    #print(f'Online user list {online_user_list} when connection of {username[0]}')
+    await sio.emit('user_online', {'username': username,'online_users':online_user_list})
 
 @sio.event
 async def message(sid, data):
@@ -90,7 +92,7 @@ async def message(sid, data):
     # Save message in MongoDB
     await chat_collection.update_one(
         update_query,
-        {"$push": {"messages": message_data}}
+        {"$set": {"last_updated":datetime.utcnow(),"last_updated_by":data['sender'],"latestMessage":data['content'][:50]},"$push": {"messages": message_data}}
     )
 
     message_data['chat_id'] = chat_id
@@ -113,7 +115,7 @@ async def register_user(user: User):
     
     user_data = {
         "email": user.email,
-        "online_status":"ONLINE",
+        "online_status":"Online",
         "timezone":"IST",
         "aboutme":aboutme_value,
         "username": user.username,
@@ -205,7 +207,8 @@ async def create_chat(chat: ChatCreate, username: str = Depends(authenticate_use
         "image": chat_image, 
         "participants": unique_chat_paticipants_list,
         "created_at": datetime.utcnow(),
-        "created_by": username  # Add the created_by field
+        "created_by": username, # Add the created_by field
+        "last_updated":datetime.utcnow()
     }
     
     new_chat = await chat_collection.insert_one(chat_data)
@@ -221,23 +224,33 @@ async def get_chat_messages(chat_id: str, skip: int = 0, limit: int = 100, usern
     messages = chat.get("messages", [])[skip:skip + limit]
     return {"messages": messages}
 
-# Fetch list of chats for a user with pagination
-@app.get("/chats",  summary="Fetch chats for a user with pagination")
+@app.get("/chats", summary="Fetch chats for a user with pagination")
 async def get_user_chats(
     user_id: str,
     skip: Optional[int] = Query(0, ge=0),  # Default to 0, must be >= 0
-    limit: Optional[int] = Query(100, ge=1, le=100),  # Default to 10, must be between 1 and 100
+    limit: Optional[int] = Query(100, ge=1, le=100),  # Default to 100, must be between 1 and 100
+    sort_field: Optional[str] = Query("last_updated"),  # Default sort field
+    sort_order: Optional[str] = Query("desc"),  # Default sort order
     username: str = Depends(authenticate_user)
 ):
+    # Determine the sorting order
+    order = ASCENDING if sort_order.lower() == "asc" else DESCENDING
+
     # Query to find documents where the username is in the participants array
     query = {
         "participants": {
             "$in": [username]  # Use the $in operator to check if the username exists in the participants array
         }
     }
-    excludcols={"messages":0}
-    chats = await chat_collection.find(query,excludcols).skip(skip).limit(limit).to_list(length=limit)
-    #print(chats)
+    excludcols = {"messages": 0}
+
+    # Fetch chats with sorting
+    chats = await chat_collection.find(query, excludcols)\
+        .sort(sort_field, order)\
+        .skip(skip)\
+        .limit(limit)\
+        .to_list(length=limit)
+
     return chats
 
 # Entry point for running the server

@@ -56,6 +56,26 @@ async def get_user_by_id(user_id: str):
     user = await user_collection.find_one({"_id": ObjectId(user_id)})
     return user
 
+async def find_users_by_usernames(username_list):
+    try:
+        # Query to find users with usernames in the provided list
+        users = list(user_collection.find({"username": {"$in": username_list}}))
+        return users
+    except Exception as e:
+        print("Error fetching users:", e)
+        return []
+    
+async def find_user_by_username(username):
+    try:
+        # Query to find users with usernames in the provided list
+        query_user={"username": username}
+        includcols={"username":1,"aboutme":1,"avatarUrl":1}
+        users = list(user_collection.find_one(query_user,includcols))
+        return users
+    except Exception as e:
+        print("Error fetching users:", e)
+        return []
+
 async def authenticate_user(credentials: HTTPBasicCredentials = Depends(security)):
     user = await user_collection.find_one({"username": credentials.username})
     

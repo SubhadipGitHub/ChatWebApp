@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import '@fortawesome/fontawesome-free/css/all.min.css'; // Import FontAwesome CSS
 import './ChatList.css'; // Import custom CSS
 import { toast } from 'react-toastify';
@@ -15,12 +15,12 @@ const ChatList = ({ chats, selectedChat, onChatSelect, loggedInUser, onAddChat }
 
   const [isEditing, setIsEditing] = useState(false); // Track editing state
   const [userDetails, setUserDetails] = useState({
-    name: loggedInUser.name,
-    about: loggedInUser.aboutme, // Dummy data
-    timezone: loggedInUser.timezone, // Default timezone
-    onlineStatus: loggedInUser.online_status, // Default online status
+    name: '',
+    about: '',
+    timezone: '',
+    onlineStatus: '',
   });
-  console.log(userDetails);
+
   const timezones = ['GMT', 'UTC', 'PST', 'EST']; // Sample timezones
   const statuses = ['Online', 'Offline', 'Away', 'Busy']; // Sample statuses
 
@@ -147,6 +147,17 @@ const ChatList = ({ chats, selectedChat, onChatSelect, loggedInUser, onAddChat }
     chat.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  useEffect(() => {
+    if (loggedInUser) {
+      setUserDetails({
+        name: loggedInUser.name,
+        about: loggedInUser.aboutme || 'No information provided', // Fallback if aboutme is not available
+        timezone: loggedInUser.timezone || 'Default Timezone', // Fallback timezone
+        onlineStatus: loggedInUser.online_status || 'offline', // Fallback to 'offline'
+      });
+    }
+  }, [loggedInUser]);
+
 
   return (
     <div className="chat-header chat-list-container p-3 d-flex flex-column" style={{ height: '100vh', borderRight: '1px solid #ddd' }}>
@@ -174,52 +185,63 @@ const ChatList = ({ chats, selectedChat, onChatSelect, loggedInUser, onAddChat }
       </div>
 
       {/* Chat list */}
-      <div className="list-group flex-grow-1 overflow-auto">
-        {filteredChats.length > 0 ? (
-          filteredChats.map((chat, index) => (
-            <div
-              key={index}
-              className={`list-group-item list-group-item-action d-flex align-items-center mb-2 border-0 rounded ${selectedChat && selectedChat.id === chat.id ? 'active-chat' : ''
-                }`}
-              onClick={() => onChatSelect(chat)}
-            >
-              <div className="d-flex align-items-center me-3" onClick={(e) => { e.stopPropagation(); handleShowChatModal(index); }}>
-                {/* Render two participant avatars if chat.participants length is 2 */}
-                {chat.participants.length === 2 ? (
-                  <div className="chat-avatar-container">
-                    <img
-                      src={chat.participants[0].avatar || avatar}
-                      alt={`${chat.participants[0].name} avatar`}
-                      className="chat-avatar chat-avatar-1"
-                    />
-                    <img
-                      src={chat.participants[1].avatar || avatar}
-                      alt={`${chat.participants[1].name} avatar`}
-                      className="chat-avatar chat-avatar-2"
-                    />
-                  </div>
-                ) : (
-                  <img
-                    src={loggedInUser.avatarUrl}
-                    alt="Chat avatar"
-                    className="rounded-circle chat-list-image"
-                    style={{ width: '30px', height: '30px' }}
-                  />
-                )}
-              </div>
-              <div className="w-100">
-                <h6 className="mb-1">{chat.name}</h6>
-                <p className="mb-1 text-muted">{chat.latestMessage}</p>
-              </div>
-              <div className="text-muted">
-                <i className="fas fa-chevron-right"></i>
-              </div>
+<div className="list-group flex-grow-1 overflow-auto">
+  {filteredChats.length > 0 ? (
+    filteredChats.map((chat, index) => (
+      <div
+        key={index}
+        className={`list-group-item list-group-item-action d-flex align-items-center justify-content-between mb-2 border-0 rounded chat-list-item ${selectedChat && selectedChat.id === chat.id ? 'active-chat' : ''}`}
+        onClick={() => onChatSelect(chat)}
+        style={{ height: '80px' }}  
+      >
+        <div className="d-flex align-items-center me-3" onClick={(e) => { e.stopPropagation(); handleShowChatModal(index); }}>
+          {/* Render two participant avatars if chat.participants length is 2 */}
+          {chat.participants.length === 2 ? (
+            <div className="chat-avatar-container">
+              <img
+                src={chat.participants[0].avatar || avatar}
+                alt={`${chat.participants[0].name} avatar`}
+                className="chat-avatar chat-avatar-1"
+              />
+              <img
+                src={chat.participants[1].avatar || avatar}
+                alt={`${chat.participants[1].name} avatar`}
+                className="chat-avatar chat-avatar-2"
+              />
             </div>
-          ))
-        ) : (
-          <p>No chats found</p>
-        )}
+          ) : (
+            <img
+              src={loggedInUser.avatarUrl}
+              alt="Chat avatar"
+              className="rounded-circle chat-list-image"
+              style={{ width: '30px', height: '30px' }}
+            />
+          )}
+        </div>
+
+        <div className="w-100">
+          <h6 className="mb-1">{chat.name}</h6>
+          {/* Hide the latest message if chat is selected */}
+          {selectedChat && selectedChat.id === chat.id ? null : (
+            <p className="mb-1 text-muted">{chat.latestMessage}</p>
+          )}
+        </div>
+
+        {/* Unread message badge */}
+        {!selectedChat || selectedChat.id !== chat.id ? (
+          chat.unreadMessages > 0 && (
+            <span className="badge bg-primary rounded-pill">
+              {chat.unreadMessages}
+            </span>
+          )
+        ) : null}
       </div>
+    ))
+  ) : (
+    <p>No chats found</p>
+  )}
+</div>
+
 
 
       {/* Logged-in user profile section */}
@@ -267,7 +289,7 @@ const ChatList = ({ chats, selectedChat, onChatSelect, loggedInUser, onAddChat }
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="Enter chat name"
+                  placeholder="Enter username"
                   value={newChatName}
                   onChange={(e) => setNewChatName(e.target.value)}
                 />
@@ -301,7 +323,7 @@ const ChatList = ({ chats, selectedChat, onChatSelect, loggedInUser, onAddChat }
                   onClick={handleCloseModal} // Close button now resets isEditing
                 ></button>
               </div>
-              <div className="modal-body">
+              <div className="modal-body text-center">
                 <div className="profile-image-wrapper-modal">
                   <img
                     src={loggedInUser.avatarUrl || 'https://via.placeholder.com/150'}
@@ -309,13 +331,15 @@ const ChatList = ({ chats, selectedChat, onChatSelect, loggedInUser, onAddChat }
                     className="rounded-circle mb-3 text-center"
                     style={{ width: '100px', height: '100px', objectFit: 'cover' }}
                   />
-                  <span className="online-badge-modal"></span>
+                  <span 
+              className={`online-badge-modal ${userDetails.onlineStatus.toLowerCase()}-status`}>
+            </span>
                 </div>
                 <hr></hr>
                 {/* Name Field */}
                 <div class="mb-3">
                   <label for="logged-username" class="form-label">Username</label>
-                  <input type="text" class="form-control" id="logged-username" placeholder="Enter a username" value={loggedInUser.name} readonly></input>
+                  <input type="text" class="form-control" id="logged-username" placeholder="Enter a username" value={userDetails.name} readonly></input>
                 </div>
 
                 {/* Online Status Dropdown */}
@@ -332,7 +356,7 @@ const ChatList = ({ chats, selectedChat, onChatSelect, loggedInUser, onAddChat }
                     ))}
                   </select>
                 ) : (
-                  <p>{loggedInUser.online_status}</p>
+                  <p>{userDetails.onlineStatus}</p>
                 )}
 
                 {/* About Me Field */}
@@ -347,7 +371,7 @@ const ChatList = ({ chats, selectedChat, onChatSelect, loggedInUser, onAddChat }
                   <textarea name="about"
                     className="form-control mb-2"
                     rows="3"
-                    value={loggedInUser.aboutme} readonly></textarea>
+                    value={userDetails.about} readonly></textarea>
                 )}
 
 
@@ -365,7 +389,7 @@ const ChatList = ({ chats, selectedChat, onChatSelect, loggedInUser, onAddChat }
                     ))}
                   </select>
                 ) : (
-                  <p>{loggedInUser.timezone}</p>
+                  <p>{userDetails.timezone}</p>
                 )}
 
               </div>
