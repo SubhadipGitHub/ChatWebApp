@@ -6,7 +6,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { createAvatar } from '@dicebear/core';
 import { lorelei } from '@dicebear/collection';
 
-const ChatList = ({ chats, selectedChat, onChatSelect, loggedInUser, onAddChat }) => {
+const ChatList = ({ chats, selectedChat, onChatSelect, loggedInUser,setLoggedInUser, onAddChat }) => {
   const [showUserModal, setShowUserModal] = useState(false); // Modal for logged-in user
   const [showChatModal, setShowChatModal] = useState(null); // Modal for chat details
   const [searchQuery, setSearchQuery] = useState(''); // State for search query
@@ -54,9 +54,55 @@ const ChatList = ({ chats, selectedChat, onChatSelect, loggedInUser, onAddChat }
 
   const handleSaveClick = () => {
     setIsEditing(false); // Disable editing
-    // Perform any save actions here (e.g., call an API to save the updated data)
+    // Prepare the data to send in the API request
+    const updatedData = {
+        online_status: userDetails.onlineStatus, // Example: "Online"
+        timezone: userDetails.timezone, // Example: "IST"
+        aboutme: userDetails.about, // Example: "Updated about me text"
+    };
+
+    // Call the FastAPI endpoint to update user details
+    fetch(`http://localhost:8000/users/${loggedInUser.name}`, {
+        method: 'PUT', // The HTTP method for the API call
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updatedData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Handle the response from the API
+        console.log('User updated successfully:', data);
+
+        // Retrieve the user object from localStorage
+        const storedUser = JSON.parse(localStorage.getItem('user'));
+
+        // Update the online_status field in the user object
+        if (storedUser) {
+            storedUser.online_status = updatedData.online_status;
+            
+            // Update other fields if necessary
+            storedUser.timezone = updatedData.timezone;
+            storedUser.aboutme = updatedData.aboutme;
+
+            // Save the updated user object back to localStorage
+            localStorage.setItem('user', JSON.stringify(storedUser));
+
+            // Optionally, update the state of loggedInUser if needed
+            setLoggedInUser(prevState => ({
+                ...prevState,
+                ...updatedData
+            }));
+          }
+    })
+    .catch(error => {
+        // Handle any errors
+        console.error('Error updating user:', error);
+    });
+
     console.log('Saved details:', userDetails);
-  };
+};
+
 
   const handleCloseModal = () => {
     setIsEditing(false); // Reset isEditing when modal closes
@@ -256,7 +302,7 @@ const ChatList = ({ chats, selectedChat, onChatSelect, loggedInUser, onAddChat }
                 style={{ width: '40px', height: '40px' }}
               />
               {/* Online Badge */}
-              <span className="online-badge"></span>
+              <span className={`online-badge ${userDetails.onlineStatus.toLowerCase()}-status`}></span>
             </div>
 
             <span>{loggedInUser.name}</span>
@@ -337,9 +383,9 @@ const ChatList = ({ chats, selectedChat, onChatSelect, loggedInUser, onAddChat }
                 </div>
                 <hr></hr>
                 {/* Name Field */}
-                <div class="mb-3">
-                  <label for="logged-username" class="form-label">Username</label>
-                  <input type="text" class="form-control" id="logged-username" placeholder="Enter a username" value={userDetails.name} readonly></input>
+                <div className="mb-3">
+                  <label htmlFor="logged-username" className="form-label">Username</label>
+                  <input type="text" className="form-control" id="logged-username" placeholder="Enter a username" value={userDetails.name} readOnly></input>
                 </div>
 
                 {/* Online Status Dropdown */}
@@ -360,8 +406,8 @@ const ChatList = ({ chats, selectedChat, onChatSelect, loggedInUser, onAddChat }
                 )}
 
                 {/* About Me Field */}
-                <label for="logged-about" class="form-label">About me</label>
-                {isEditing ? (<div class="mb-3">
+                <label htmlFor="logged-about" className="form-label">About me</label>
+                {isEditing ? (<div className="mb-3">
                   <textarea name="about"
                     className="form-control mb-2"
                     rows="3"
@@ -371,12 +417,12 @@ const ChatList = ({ chats, selectedChat, onChatSelect, loggedInUser, onAddChat }
                   <textarea name="about"
                     className="form-control mb-2"
                     rows="3"
-                    value={userDetails.about} readonly></textarea>
+                    value={userDetails.about} readOnly></textarea>
                 )}
 
 
                 {/* Timezone Dropdown */}
-                <label for="timezone" class="form-label">Timezone</label>
+                <label htmlFor="timezone" className="form-label">Timezone</label>
                 {isEditing ? (
                   <select
                     name="timezone"

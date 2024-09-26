@@ -23,7 +23,7 @@ class User(BaseModel):
 # User Model update
 class UserUpdateModel(BaseModel):
     online_status: str = Field(..., example="Online")
-    about_me: str = Field(..., example="This is my updated about me section.")
+    aboutme: str = Field(..., example="This is my updated about me section.")
     timezone: str = Field(..., example="GMT")
 
     class Config:

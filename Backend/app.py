@@ -4,7 +4,7 @@ from pydantic import BaseModel
 import socketio
 from typing import List, Optional
 from auth import create_user, authenticate_user, hash_password, verify_password,find_user_by_username
-from db import chat_collection, user_collection
+from db import chat_collection, user_collection,client
 from models import Chat, Message, User,ChatCreate,UserUpdateModel
 from bson.objectid import ObjectId
 from datetime import datetime
@@ -159,13 +159,28 @@ async def login_user(username: str, password: str):
                  "online_status":user['online_status'],
         "timezone":user['timezone'],
         "aboutme":user['aboutme']}}
+    
+@app.get("/server_status")
+async def server_status():
+    
+    db_server_status = await client.admin.command("serverStatus")
+    # Extract connection details
+    connections = db_server_status['connections']
+    #print(f'Server Status Mongo DB : {connections}')
+    user_count = await user_collection.count_documents({})
+    user_online_count = len(online_user_list)
+    data_response = {"user_count":user_count,
+                     "user_online_count":user_online_count,
+                     "db_connections":connections}
+    return data_response
 
 @app.put("/users/{user_id}", response_model=dict)
 async def update_user(user_id: str, user_data: UserUpdateModel):
+    print(user_data)
 
     # Update the user document with the new data
     update_result = await user_collection.update_one(
-        {"_id": ObjectId(user_id)},
+        {"username": user_id},
         {"$set": user_data.dict()}
     )
 

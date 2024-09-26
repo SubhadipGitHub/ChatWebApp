@@ -59,7 +59,9 @@ const ChatPage = () => {
 
     if (user) {
       const parsedUser = JSON.parse(user);
+      console.log(parsedUser);      
       setLoggedInUser(parsedUser);
+      console.log(loggedInUser);
 
       // Ensure socket is only initialized once
       if (!socket) {
@@ -121,7 +123,7 @@ const ChatPage = () => {
   return (
     <div className="chat-page-container">
       <div className="chat-list-container">
-        <ChatList chats={chats} onChatSelect={handleChatSelect} loggedInUser={loggedInUser} selectedChat={selectedChat} onAddChat={handleAddChatToList} />
+        <ChatList chats={chats} onChatSelect={handleChatSelect} loggedInUser={loggedInUser} setLoggedInUser={setLoggedInUser} selectedChat={selectedChat} onAddChat={handleAddChatToList} />
       </div>
 
       <div className={`chat-detail-container ${selectedChat ? 'active' : ''}`}>
