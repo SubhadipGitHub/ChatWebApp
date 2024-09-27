@@ -31,31 +31,73 @@ const ChatDetail = ({ chatId, chatName, chatimage, chatparticipants, loggedInUse
   const [showEmojiPicker, setShowEmojiPicker] = useState(false); // State to show/hide emoji picker
   const [messages, setMessages] = useState([]); // State for chat messages
   const isConnected = useRef(false); // Track connection status
-  var receivername = '';
+  const [receiverDetails, setReceiverDetails] = useState(
+    {
+      name: '',
+      about: '',
+      avatarUrl: '',
+    }
+  );
 
   console.log(onlineusers);
-  //receivername
-  // Remove the element with same name as loggeduser
-  if (chatparticipants.length > 1) {
-  const receiverArray = chatparticipants.filter(item => item !== loggedInUser.name);
-  receivername = receiverArray.toString();
-  }
-  else{
-    receivername = chatparticipants.toString();
-  }
-  
+
+  useEffect(() => {
+    // This logic filters the chat participants to find the receiver's name
+    let receiverName = '';
+    if (chatparticipants.length > 1) {
+      receiverName = chatparticipants.filter(item => item !== loggedInUser.name).toString();
+    } else {
+      receiverName = chatparticipants.toString();
+    }
+
+    // Update receiver name first
+    setReceiverDetails(prevDetails => ({
+      ...prevDetails,
+      name: receiverName,
+    }));
+
+    // Fetch receiver details from the API
+    const fetchReceiverDetails = async (name) => {
+      try {
+        const baseURI = 'http://localhost:8000';
+        const endpoint = `${baseURI}/users/${name}`;
+
+        const response = await fetch(endpoint, { method: 'GET' });
+        if (!response.ok) {
+          throw new Error(`Error: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        // Set receiver details after fetching from the API
+        setReceiverDetails(prevDetails => ({
+          ...prevDetails,
+          about: data.aboutme,
+          avatarUrl: data.avatarUrl,
+        }));
+        
+      } catch (err) {
+        console.error("Error fetching user details: ", err);
+      }
+    };
+
+    // Call fetchReceiverDetails only if receiverName is set
+    if (receiverName) {
+      fetchReceiverDetails(receiverName);
+    }
+  }, [loggedInUser.name, chatparticipants]); // Ensures it only runs when `chatparticipants` or `loggedInUser.name` changes
+
 
   // Create a reference to the chat messages container
   const chatMessagesRef = useRef(null);
 
   // Update online status
   useEffect(() => {
-    if (onlineusers.find(item => item === receivername)) {
+    if (onlineusers.find(item => item === receiverDetails.name)) {
       setOnlineStatus(true);
     } else {
       setOnlineStatus(false);  // Ensure the status is updated correctly
     }
-  }, [onlineusers, receivername]);  // Add `receivername` as a dependency
+  }, [onlineusers, receiverDetails.name]);  // Add `receivername` as a dependency
 
   // Fetch existing messages whenever the chatId changes
   useEffect(() => {
@@ -63,8 +105,6 @@ const ChatDetail = ({ chatId, chatName, chatimage, chatparticipants, loggedInUse
     setMessages([]);
 
     if (!isConnected.current) {
-      // Connect the socket (no need for rooms now)
-      socket.emit('joinChat', { chatId, username: loggedInUser.name });
       isConnected.current = true; // Mark the socket as connected
     }
 
@@ -191,13 +231,13 @@ const ChatDetail = ({ chatId, chatName, chatimage, chatparticipants, loggedInUse
     <div className="chat-detail-container d-flex flex-column flex-grow-1">
       <div className="chat-header p-3 bg-light border-bottom d-flex align-items-center">
         <img
-          src={chatimage || 'https://via.placeholder.com/50'}
+          src={receiverDetails.avatarUrl || 'https://via.placeholder.com/50'}
           alt="Chat"
           className="chat-detail-image rounded-circle me-3"
           style={{ width: '50px', height: '50px' }}
         />
         <div className="chat-header-info">
-          <h5 className="mb-0">{receivername}</h5>
+          <h5 className="mb-0">{receiverDetails.name}</h5>
           {/* Online status */}
           <div className="d-flex align-items-center mt-1">
             <span
@@ -229,7 +269,7 @@ const ChatDetail = ({ chatId, chatName, chatimage, chatparticipants, loggedInUse
 
               <div className={`message ${msg.sender === loggedInUser.name ? 'message-sent' : 'message-received'} d-flex`}>
                 <img
-                  src={msg.sender === loggedInUser.name ? loggedInUser.avatarUrl : chatimage}
+                  src={msg.sender === loggedInUser.name ? loggedInUser.avatarUrl : receiverDetails.avatarUrl}
                   alt={msg.sender}
                   className="rounded-circle me-2"
                   style={{ width: '40px', height: '40px' }}

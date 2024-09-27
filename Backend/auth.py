@@ -69,12 +69,27 @@ async def find_user_by_username(username):
     try:
         # Query to find users with usernames in the provided list
         query_user={"username": username}
-        includcols={"username":1,"aboutme":1,"avatarUrl":1}
-        users = list(user_collection.find_one(query_user,includcols))
+        includcols={"username":1,"aboutme":1,"avatarUrl":1,"_id":0}
+        users = await user_collection.find_one(query_user,includcols)
+        print(users)
         return users
     except Exception as e:
         print("Error fetching users:", e)
-        return []
+        return {}
+    
+async def find_user_online_status(username):
+    try:
+        # Query to find users with usernames in the provided list
+        query_user={"username": username}
+        includcols={"online_status":1}
+        users = await user_collection.find_one(query_user,includcols)
+        if(users['online_status'] == 'Online'):
+            return True
+        else:
+            return False
+    except Exception as e:
+        print("Error fetching users:", e)
+        return False
 
 async def authenticate_user(credentials: HTTPBasicCredentials = Depends(security)):
     user = await user_collection.find_one({"username": credentials.username})

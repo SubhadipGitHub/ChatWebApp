@@ -3,12 +3,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import socketio
 from typing import List, Optional
-from auth import create_user, authenticate_user, hash_password, verify_password,find_user_by_username
+from auth import create_user, authenticate_user, hash_password, verify_password,find_user_by_username,find_user_online_status
 from db import chat_collection, user_collection,client
 from models import Chat, Message, User,ChatCreate,UserUpdateModel
 from bson.objectid import ObjectId
 from datetime import datetime
 from pymongo import ASCENDING, DESCENDING
+from pymongo.errors import PyMongoError
 
 app = FastAPI()
 
@@ -61,12 +62,15 @@ async def user_connected(sid, data):
             await sio.disconnect(session_id)
             online_users.remove((user, session_id))
             break
-
-    # Add the new session for the user
-    online_users.add((username, sid))
-    online_user_list = [item[0] for item in online_users]
-    #print(f'Online user list {online_user_list} when connection of {username[0]}')
-    await sio.emit('user_online', {'username': username,'online_users':online_user_list})
+    
+    # find online status of user
+    user_online = await find_user_online_status(username)
+    if(user_online == True):
+        # Add the new session for the user
+        online_users.add((username, sid))
+        online_user_list = [item[0] for item in online_users]
+        #print(f'Online user list {online_user_list} when connection of {username[0]}')
+        await sio.emit('user_online', {'username': username,'online_users':online_user_list})
 
 @sio.event
 async def message(sid, data):
@@ -174,6 +178,25 @@ async def server_status():
                      "db_connections":connections}
     return data_response
 
+@app.delete("/drop-collections")
+async def drop_collections():
+    try:
+        # Drop users collection
+        users_result = await user_collection.drop()
+        
+        # Drop chat collection
+        chat_result = await chat_collection.drop()
+
+        return {"message": "Users and chat collections dropped successfully"}
+
+    except PyMongoError as e:
+        # Handle any pymongo specific errors
+        raise HTTPException(status_code=500, detail=f"Failed to drop collections: {str(e)}")
+
+    except Exception as e:
+        # Handle any other unexpected exceptions
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
+
 @app.put("/users/{user_id}", response_model=dict)
 async def update_user(user_id: str, user_data: UserUpdateModel):
     print(user_data)
@@ -188,6 +211,20 @@ async def update_user(user_id: str, user_data: UserUpdateModel):
         raise HTTPException(status_code=400, detail="Failed to update user")
 
     return {"message": "User updated successfully"}
+
+@app.get("/users/{user_id}")
+async def get_user(user_id: str):
+    try:
+        # Find user by user_id
+        user = await find_user_by_username(user_id)
+        if not user:
+            # Raise 404 error if user is not found
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        return user  # Return the user details
+    except Exception as e:
+        # Catch any unexpected exceptions and return a 500 Internal Server Error
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
 # Create a new chat
 @app.post("/chats/", response_model=dict, summary="Create a new chat")

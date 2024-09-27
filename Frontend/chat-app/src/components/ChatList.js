@@ -72,6 +72,10 @@ const ChatList = ({ chats, selectedChat, onChatSelect, loggedInUser,setLoggedInU
     .then(response => response.json())
     .then(data => {
         // Handle the response from the API
+        toast.success('User profile updated successfully!', {
+          position: "top-right",
+          autoClose: 2000,
+        });
         console.log('User updated successfully:', data);
 
         // Retrieve the user object from localStorage
@@ -80,7 +84,11 @@ const ChatList = ({ chats, selectedChat, onChatSelect, loggedInUser,setLoggedInU
         // Update the online_status field in the user object
         if (storedUser) {
             storedUser.online_status = updatedData.online_status;
-            
+            var refreshpage = false;
+            if(storedUser.online_status !== loggedInUser.online_status)
+            {
+              refreshpage = true;
+            }
             // Update other fields if necessary
             storedUser.timezone = updatedData.timezone;
             storedUser.aboutme = updatedData.aboutme;
@@ -93,10 +101,18 @@ const ChatList = ({ chats, selectedChat, onChatSelect, loggedInUser,setLoggedInU
                 ...prevState,
                 ...updatedData
             }));
+            if(refreshpage === true)
+            {
+              window.location.reload();
+            }
           }
     })
     .catch(error => {
         // Handle any errors
+        toast.warn(`Error updating user: ${error}`, {
+          position: "top-right",
+          autoClose: 2000,
+        });
         console.error('Error updating user:', error);
     });
 

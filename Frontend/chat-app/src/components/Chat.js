@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect ,useRef} from 'react';
 import ChatList from './ChatList';
 import ChatDetail from './ChatDetail';
 import './Chat.css';
@@ -14,6 +14,8 @@ const ChatPage = () => {
   const [selectedChat, setSelectedChat] = useState(null);
   const [loggedInUser, setLoggedInUser] = useState({});
   const [onlineUsers, setOnlineUsers] = useState([]);
+  
+  const isConnected = useRef(false); // Track connection status
 
   // Fetch chats after confirming the user is logged in
   const fetchChats = async () => {
@@ -71,10 +73,11 @@ const ChatPage = () => {
           timeout: 5000,
         });
 
-        socket.on('connect', () => {
+        if (!isConnected.current) {
           console.log('Socket connected. Emitting user_connected...');
           socket.emit('user_connected', { username: parsedUser.name });
-        });
+          isConnected.current = true; // Mark the socket as connected
+        };
 
         // Listen for users going online
         socket.on('user_online', (data) => {
