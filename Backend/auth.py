@@ -5,7 +5,7 @@ from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from pydantic import BaseModel
 import os
-from db import user_collection
+from db import user_collection,ADMIN_PASS,ADMIN_USER,ADMIN_EMAIL,ADMIN_GENDER
 from bson.objectid import ObjectId
 from dotenv import load_dotenv
 import bcrypt
@@ -24,6 +24,47 @@ class User(BaseModel):
     email: str
     username: str
     password: str
+    
+# A function to verify the provided username and password
+def verify_credentials(credentials: HTTPBasicCredentials):
+    correct_username = credentials.username == ADMIN_USER
+    correct_password = credentials.password == ADMIN_PASS
+
+    if not (correct_username and correct_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid username or password",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+    return credentials.username
+
+# Function to check if the user exists and insert if not
+async def create_admin_user():
+    # Check if the user already exists
+    user = await user_collection.find_one({"username": ADMIN_USER})
+    
+    if not user:
+        # Hash the admin password
+        hashed_password = hash_password(ADMIN_PASS)
+        
+        # Create user data
+        user_data = {
+            "email": ADMIN_EMAIL,
+            "online_status": "Offline",
+            "timezone": "IST",
+            "aboutme": "I AM THE BOSS",
+            "username": ADMIN_USER,
+            "password": hashed_password,
+            "gender": ADMIN_GENDER,
+            "avatarUrl": f'https://api.multiavatar.com/{ADMIN_GENDER}-{ADMIN_USER}.png',
+            "creation_date": datetime.utcnow()
+        }
+
+        # Insert the user data into the user collection
+        result = await user_collection.insert_one(user_data)
+        print(f"Admin user created with id: {result.inserted_id}")
+    else:
+        print("Admin user already exists")
 
 def get_password_hash(password):
     return pwd_context.hash(password)

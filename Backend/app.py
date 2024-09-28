@@ -1,9 +1,10 @@
 from fastapi import FastAPI, HTTPException, Depends, status, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel
 import socketio
 from typing import List, Optional
-from auth import create_user, authenticate_user, hash_password, verify_password,find_user_by_username,find_user_online_status
+from auth import create_admin_user, authenticate_user, hash_password, verify_password,find_user_by_username,find_user_online_status,verify_credentials
 from db import chat_collection, user_collection,client
 from models import Chat, Message, User,ChatCreate,UserUpdateModel
 from bson.objectid import ObjectId
@@ -12,6 +13,9 @@ from pymongo import ASCENDING, DESCENDING
 from pymongo.errors import PyMongoError
 
 app = FastAPI()
+
+# Use FastAPI's built-in HTTPBasic dependency for basic authentication
+security = HTTPBasic()
 
 origins = [
     "http://localhost:3000"  # Frontend origin
@@ -37,6 +41,11 @@ sio = socketio.AsyncServer(
 # Store connected users in a set or a dictionary
 online_users = set()
 online_user_list = []
+
+# Backend initialization hook
+@app.on_event("startup")
+async def on_startup():
+    await create_admin_user()
 
 # Handle socket disconnection
 @sio.event
@@ -164,22 +173,30 @@ async def login_user(username: str, password: str):
         "timezone":user['timezone'],
         "aboutme":user['aboutme']}}
     
+
 @app.get("/server_status")
-async def server_status():
+async def server_status(credentials: HTTPBasicCredentials = Depends(security)):
+    # Validate the credentials
+    verify_credentials(credentials)
     
+    # If the credentials are valid, return the server status
     db_server_status = await client.admin.command("serverStatus")
-    # Extract connection details
     connections = db_server_status['connections']
-    #print(f'Server Status Mongo DB : {connections}')
     user_count = await user_collection.count_documents({})
     user_online_count = len(online_user_list)
-    data_response = {"user_count":user_count,
-                     "user_online_count":user_online_count,
-                     "db_connections":connections}
+    
+    data_response = {
+        "user_count": user_count,
+        "user_online_count": user_online_count,
+        "db_connections": connections
+    }
+    
     return data_response
 
-@app.delete("/drop-collections")
-async def drop_collections():
+@app.delete("/drop_collections")
+async def drop_collections(credentials: HTTPBasicCredentials = Depends(security)):
+    # Verify Basic Auth credentials
+    verify_credentials(credentials)
     try:
         # Drop users collection
         users_result = await user_collection.drop()
@@ -198,7 +215,7 @@ async def drop_collections():
         raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
 
 @app.put("/users/{user_id}", response_model=dict)
-async def update_user(user_id: str, user_data: UserUpdateModel):
+async def update_user(user_id: str, user_data: UserUpdateModel, username: str = Depends(authenticate_user)):
     print(user_data)
 
     # Update the user document with the new data
@@ -213,7 +230,7 @@ async def update_user(user_id: str, user_data: UserUpdateModel):
     return {"message": "User updated successfully"}
 
 @app.get("/users/{user_id}")
-async def get_user(user_id: str):
+async def get_user(user_id: str, username: str = Depends(authenticate_user)):
     try:
         # Find user by user_id
         user = await find_user_by_username(user_id)

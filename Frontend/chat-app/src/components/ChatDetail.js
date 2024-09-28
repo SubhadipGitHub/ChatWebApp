@@ -25,6 +25,9 @@ const playSound = () => {
 const username = localStorage.getItem('username'); // Get username from local storage
 const password = localStorage.getItem('password'); // Get password from local storage
 
+// Encode the credentials for Basic Auth
+const encodedCredentials = btoa(`${username}:${password}`);
+
 const ChatDetail = ({ chatId, chatName, chatimage, chatparticipants, loggedInUser, onlineusers }) => {
   const [message, setMessage] = useState('');
   const [onlinestatus, setOnlineStatus] = useState(false);
@@ -66,7 +69,10 @@ const ChatDetail = ({ chatId, chatName, chatimage, chatparticipants, loggedInUse
         const baseURI = 'http://localhost:8000';
         const endpoint = `${baseURI}/users/${name}`;
 
-        const response = await fetch(endpoint, { method: 'GET' });
+        const response = await fetch(endpoint, { method: 'GET' ,headers: {
+          'Authorization': `Basic ${encodedCredentials}`,
+          'Content-Type': 'application/json',
+      },});
         if (!response.ok) {
           throw new Error(`Error: ${response.statusText}`);
         }

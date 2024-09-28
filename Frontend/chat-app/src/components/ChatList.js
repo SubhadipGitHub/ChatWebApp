@@ -20,6 +20,12 @@ const ChatList = ({ chats, selectedChat, onChatSelect, loggedInUser, setLoggedIn
     onlineStatus: '',
   });
 
+  const username = localStorage.getItem('username'); // Get username from local storage
+const password = localStorage.getItem('password'); // Get password from local storage
+
+// Encode the credentials for Basic Auth
+const encodedCredentials = btoa(`${username}:${password}`);
+
   const timezones = ['GMT', 'UTC', 'PST', 'EST']; // Sample timezones
   const statuses = ['Online', 'Offline', 'Away', 'Busy']; // Sample statuses
 
@@ -60,8 +66,9 @@ const ChatList = ({ chats, selectedChat, onChatSelect, loggedInUser, setLoggedIn
     fetch(`http://localhost:8000/users/${loggedInUser.name}`, {
       method: 'PUT', // The HTTP method for the API call
       headers: {
-        'Content-Type': 'application/json'
-      },
+        'Authorization': `Basic ${encodedCredentials}`,
+        'Content-Type': 'application/json',
+    },
       body: JSON.stringify(updatedData)
     })
       .then(response => response.json())

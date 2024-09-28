@@ -1,18 +1,38 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUsers, faUserCheck, faPlug, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import DeleteDataModal from './DeleteDataModal'; // Import the modal component
 
 const Dashboard = () => {
     const [totalUsers, setTotalUsers] = useState(0);
     const [onlineUsers, setOnlineUsers] = useState(0);
     const [activeSockets, setActiveSockets] = useState(0);
 
+    
+    // Get username and password from localStorage
+    const username = localStorage.getItem('username');
+    const password = localStorage.getItem('password');
+
+    const navigate = useNavigate();  // Use useNavigate here, outside fetchServerStatus
+
     // Fetch data from the server-status API
     useEffect(() => {
         const fetchServerStatus = async () => {
             try {
-                const response = await fetch('http://localhost:8000/server_status');
+
+                // Encode the credentials for Basic Auth
+                const encodedCredentials = btoa(`${username}:${password}`);
+
+                const response = await fetch('http://localhost:8000/server_status', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Basic ${encodedCredentials}`,
+                    },
+                });
                 const data = await response.json();
 
                 setTotalUsers(data.user_count);
@@ -20,20 +40,59 @@ const Dashboard = () => {
                 setActiveSockets(data.db_connections.current);
             } catch (error) {
                 console.error("Error fetching server status: ", error);
+                navigate('/unauthorized');  // Use navigate here
             }
         };
 
-        fetchServerStatus();
-    }, []);
+        fetchServerStatus();  // Call the function within useEffect
+    }, [navigate]);  // Include navigate in dependency array
 
     const handleClearSockets = () => {
         alert('Cleared all socket connections!');
         // Call API to clear socket connections
     };
 
-    const handleDeleteAllData = () => {
-        alert('Deleted all data from the database!');
-        // Call API to delete all data from DB
+    const [showModal, setShowModal] = useState(false);
+
+    const handleShow = () => setShowModal(true);
+    const handleClose = () => setShowModal(false);
+
+    const handleDeleteAllData = async () => {
+        try {
+
+            // Encode the credentials for Basic Auth
+            const encodedCredentials = btoa(`${username}:${password}`);
+
+            // Make a DELETE request to the backend to drop collections
+            const response = await fetch('http://localhost:8000/drop_collections', {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Basic ${encodedCredentials}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (response.ok) {
+                toast.success('Deleted all data from the database!', {
+                    position: "top-right",
+                    autoClose: 2000,
+                });
+            } else {
+                const errorData = await response.json();
+                toast.error(`Failed to delete data: ${errorData.message}`, {
+                    position: "top-right",
+                    autoClose: 2000,
+                });
+            }
+        } catch (error) {
+            console.error("Error deleting data: ", error);
+            toast.error("Error occurred while deleting data. Please try again.", {
+                position: "top-right",
+                autoClose: 2000,
+            });
+        } finally {
+            handleClose(); // Close the modal after the operation
+        }
     };
 
     return (
@@ -124,13 +183,19 @@ const Dashboard = () => {
                     <div className="col-md-6 p-2">
                         <button
                             className="btn btn-danger w-100"
-                            onClick={handleDeleteAllData}
+                            onClick={handleShow}
                         >
                             <FontAwesomeIcon icon={faTrash} /> Delete All Data
                         </button>
                     </div>
                 </div>
             </div>
+
+            {/* Render the DeleteDataModal */}
+            <DeleteDataModal show={showModal} handleClose={handleClose} handleDelete={handleDeleteAllData} />
+
+
+            <ToastContainer />
         </>
     );
 };

@@ -4,6 +4,7 @@ import Chat from './components/Chat';
 import Login from './components/Login';
 import Register from './components/Register';
 import Dashboard from './components/Dashboard';
+import Unauthorized from './components/Unauthorized';
 
 // Mock authentication check function
 const isAuthenticated = () => {
@@ -16,7 +17,10 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/dashboard" element={<Dashboard />} />
+        {/* Protecting the chat route */}
+        <Route path="/dashboard" element={isAuthenticated() ? <Dashboard /> : <Navigate to="/login" />}
+        />
+        <Route path="/unauthorized" element={<Unauthorized />} /> {/* Add this route */}        
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/" element={<Navigate to="/chat" />} /> {/* Redirect from root to /chat */}
