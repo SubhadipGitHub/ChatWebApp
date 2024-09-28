@@ -26,8 +26,19 @@ const password = localStorage.getItem('password'); // Get password from local st
 // Encode the credentials for Basic Auth
 const encodedCredentials = btoa(`${username}:${password}`);
 
-  const timezones = ['GMT', 'UTC', 'PST', 'EST']; // Sample timezones
-  const statuses = ['Online', 'Offline', 'Away', 'Busy']; // Sample statuses
+  const timezones = [
+    "Africa/Cairo",
+    "America/New_York",
+    "Asia/Tokyo",
+    "Asia/Kolkata",
+    "Australia/Sydney",
+    "Europe/London",
+    "Europe/Berlin",
+    "America/Los_Angeles",
+    "Asia/Singapore",
+    "America/Sao_Paulo"
+]; // Sample timezones
+  const statuses = ['Online', 'Offline']; // Sample statuses ['Online', 'Offline', 'Away', 'Busy']
 
   // Function to handle modal open/close for logged-in user
   const handleShowUserModal = () => setShowUserModal(true);

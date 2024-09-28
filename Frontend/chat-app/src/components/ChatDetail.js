@@ -244,7 +244,7 @@ const ChatDetail = ({ chatId, chatName, chatimage, chatparticipants, loggedInUse
           src={receiverDetails.avatarUrl || 'https://via.placeholder.com/50'}
           alt="Chat"
           className="chat-detail-image rounded-circle me-3"
-          style={{ width: '50px', height: '50px' }}
+          style={{ width: '50px', height: '50px',cursor: 'pointer' }}
         />
         <div className="chat-header-info">
           <h5 className="mb-0">{receiverDetails.name}</h5>

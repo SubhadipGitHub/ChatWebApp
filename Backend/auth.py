@@ -5,7 +5,7 @@ from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from pydantic import BaseModel
 import os
-from db import user_collection,ADMIN_PASS,ADMIN_USER,ADMIN_EMAIL,ADMIN_GENDER
+from db import user_collection,ADMIN_PASS,ADMIN_USER,ADMIN_EMAIL,ADMIN_GENDER,ADMIN_TIMEZONE
 from bson.objectid import ObjectId
 from dotenv import load_dotenv
 import bcrypt
@@ -51,7 +51,7 @@ async def create_admin_user():
         user_data = {
             "email": ADMIN_EMAIL,
             "online_status": "Offline",
-            "timezone": "IST",
+            "timezone": ADMIN_TIMEZONE,
             "aboutme": "I AM THE BOSS",
             "username": ADMIN_USER,
             "password": hashed_password,

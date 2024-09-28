@@ -11,6 +11,7 @@ ADMIN_USER = os.getenv('ADMIN_USER', 'admin')
 ADMIN_PASS = os.getenv('ADMIN_PASS', 'password123')
 ADMIN_GENDER = os.getenv('ADMIN_GENDER', 'male')
 ADMIN_EMAIL = os.getenv('ADMIN_EMAIL', 'admin@example.com')
+ADMIN_TIMEZONE = os.getenv('ADMIN_TIMEZONE', 'Asia/Kolkata')
 
 
 client = AsyncIOMotorClient(MONGO_DETAILS)
