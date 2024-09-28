@@ -107,24 +107,7 @@
   /* Dark overlay background */
 }
 
-/* Center modal on the page */
-.modal-dialog {
-  margin: 10rem auto;
-  max-width: 500px;
-  /* Restrict max width for better readability */
-  width: 100%;
-}
 
-/* Modal content padding */
-.modal-content {
-  padding: 20px;
-  border-radius: 10px;
-  /* Rounded corners for modal */
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-  /* Modal shadow */
-  background-color: #fff;
-  /* Clean white background */
-}
 
 /* Responsive design for chat list */
 @media (max-width: 768px) {

@@ -38,6 +38,10 @@ const ChatDetail = ({ chatId, chatName, chatimage, chatparticipants, loggedInUse
       avatarUrl: '',
     }
   );
+  const [showModal, setShowModal] = useState(false);
+
+  const handleOpenModal = () => setShowModal(true);
+  const handleCloseModal = () => setShowModal(false);
 
   console.log(onlineusers);
 
@@ -74,7 +78,7 @@ const ChatDetail = ({ chatId, chatName, chatimage, chatparticipants, loggedInUse
           about: data.aboutme,
           avatarUrl: data.avatarUrl,
         }));
-        
+
       } catch (err) {
         console.error("Error fetching user details: ", err);
       }
@@ -229,7 +233,7 @@ const ChatDetail = ({ chatId, chatName, chatimage, chatparticipants, loggedInUse
 
   return (
     <div className="chat-detail-container d-flex flex-column flex-grow-1">
-      <div className="chat-header p-3 bg-light border-bottom d-flex align-items-center">
+      <div className="chat-header p-3 bg-light border-bottom d-flex align-items-center" onClick={handleOpenModal}>
         <img
           src={receiverDetails.avatarUrl || 'https://via.placeholder.com/50'}
           alt="Chat"
@@ -247,6 +251,44 @@ const ChatDetail = ({ chatId, chatName, chatimage, chatparticipants, loggedInUse
             <span className={`text-${onlinestatus ? 'success' : 'muted'} small`}>
               {onlinestatus ? 'Online' : 'Offline'}
             </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Modal for receiver details */}
+      <div className={`modal fade ${showModal ? 'show d-block' : ''}`} tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title">Receiver Details : {receiverDetails.name}</h5>
+              <button type="button" className="btn-close" onClick={handleCloseModal}></button>
+            </div>
+            <div className="modal-body align-items-center text-center">
+            <div className="profile-image-wrapper">
+              <img
+                src={receiverDetails.avatarUrl || 'https://via.placeholder.com/100'}
+                alt="User"
+                className="rounded-circle me-3 profile-image"
+                style={{ width: '100px', height: '100px' }}
+              />
+               {/* Online status badge */}
+               <span className={`online-badge-receiver ${onlinestatus ? 'online' : 'offline'}-status`}></span>
+               </div>
+               <hr></hr>
+               <div className="form-floating">                  
+                  <input
+                    type="text"
+                    className="form-control"
+                    id="aboutInput"
+                    value={receiverDetails.about}
+                    readOnly
+                  />
+                  <label htmlFor="aboutInput">About</label>
+            </div>
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>Close</button>
+            </div>
           </div>
         </div>
       </div>

@@ -19,9 +19,83 @@
     overflow-y: auto;
     height: 100%;
   }
+
+  .online-badge-receiver {
+    position: absolute;
+    top: 5px;
+    right: 15px;
+    width: 20px;
+    height: 20px;
+    background-color: #4caf50;
+    /* Green for online status */
+    border-radius: 50%;
+    border: 2px solid white;
+    /* Creates a small white border around the badge */
+  }
   
+  .profile-image-wrapper {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+  }
   
+  .profile-image {
+    border: 2px solid black;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
   
+  .online-status {
+    background-color: green;
+    animation: pulse 2s infinite;
+  }
+  
+  .away-status {
+    background-color: yellow;
+    animation: fade 3s infinite;
+  }
+  
+  .busy-status {
+    background-color: red;
+    animation: blink 1s infinite;
+  }
+  
+  .offline-status {
+    background-color: gray;
+  }
+  
+  /* Pulse animation for 'Online' */
+  @keyframes pulse {
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.2);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+  
+  /* Fade animation for 'Away' */
+  @keyframes fade {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+  
+  /* Blink animation for 'Busy' */
+  @keyframes blink {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0;
+    }
+  }
+
   .message {
     display: flex;
     align-items: flex-start;

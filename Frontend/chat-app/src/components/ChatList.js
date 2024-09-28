@@ -6,9 +6,8 @@ import 'react-toastify/dist/ReactToastify.css';
 import { createAvatar } from '@dicebear/core';
 import { lorelei } from '@dicebear/collection';
 
-const ChatList = ({ chats, selectedChat, onChatSelect, loggedInUser,setLoggedInUser, onAddChat }) => {
+const ChatList = ({ chats, selectedChat, onChatSelect, loggedInUser, setLoggedInUser, onAddChat }) => {
   const [showUserModal, setShowUserModal] = useState(false); // Modal for logged-in user
-  const [showChatModal, setShowChatModal] = useState(null); // Modal for chat details
   const [searchQuery, setSearchQuery] = useState(''); // State for search query
   const [showAddChatModal, setShowAddChatModal] = useState(false); // Modal for adding a chat
   const [newChatName, setNewChatName] = useState(''); // State for new chat name
@@ -27,10 +26,6 @@ const ChatList = ({ chats, selectedChat, onChatSelect, loggedInUser,setLoggedInU
   // Function to handle modal open/close for logged-in user
   const handleShowUserModal = () => setShowUserModal(true);
   const handleCloseUserModal = () => setShowUserModal(false);
-
-  // Function to handle modal open/close for chat details
-  const handleShowChatModal = (index) => setShowChatModal(index);
-  const handleCloseChatModal = () => setShowChatModal(null);
 
   // Function to handle the 'Add Chat' modal
   const handleShowAddChatModal = () => setShowAddChatModal(true);
@@ -56,21 +51,21 @@ const ChatList = ({ chats, selectedChat, onChatSelect, loggedInUser,setLoggedInU
     setIsEditing(false); // Disable editing
     // Prepare the data to send in the API request
     const updatedData = {
-        online_status: userDetails.onlineStatus, // Example: "Online"
-        timezone: userDetails.timezone, // Example: "IST"
-        aboutme: userDetails.about, // Example: "Updated about me text"
+      online_status: userDetails.onlineStatus, // Example: "Online"
+      timezone: userDetails.timezone, // Example: "IST"
+      aboutme: userDetails.about, // Example: "Updated about me text"
     };
 
     // Call the FastAPI endpoint to update user details
     fetch(`http://localhost:8000/users/${loggedInUser.name}`, {
-        method: 'PUT', // The HTTP method for the API call
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(updatedData)
+      method: 'PUT', // The HTTP method for the API call
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(updatedData)
     })
-    .then(response => response.json())
-    .then(data => {
+      .then(response => response.json())
+      .then(data => {
         // Handle the response from the API
         toast.success('User profile updated successfully!', {
           position: "top-right",
@@ -83,41 +78,39 @@ const ChatList = ({ chats, selectedChat, onChatSelect, loggedInUser,setLoggedInU
 
         // Update the online_status field in the user object
         if (storedUser) {
-            storedUser.online_status = updatedData.online_status;
-            var refreshpage = false;
-            if(storedUser.online_status !== loggedInUser.online_status)
-            {
-              refreshpage = true;
-            }
-            // Update other fields if necessary
-            storedUser.timezone = updatedData.timezone;
-            storedUser.aboutme = updatedData.aboutme;
-
-            // Save the updated user object back to localStorage
-            localStorage.setItem('user', JSON.stringify(storedUser));
-
-            // Optionally, update the state of loggedInUser if needed
-            setLoggedInUser(prevState => ({
-                ...prevState,
-                ...updatedData
-            }));
-            if(refreshpage === true)
-            {
-              window.location.reload();
-            }
+          storedUser.online_status = updatedData.online_status;
+          var refreshpage = false;
+          if (storedUser.online_status !== loggedInUser.online_status) {
+            refreshpage = true;
           }
-    })
-    .catch(error => {
+          // Update other fields if necessary
+          storedUser.timezone = updatedData.timezone;
+          storedUser.aboutme = updatedData.aboutme;
+
+          // Save the updated user object back to localStorage
+          localStorage.setItem('user', JSON.stringify(storedUser));
+
+          // Optionally, update the state of loggedInUser if needed
+          setLoggedInUser(prevState => ({
+            ...prevState,
+            ...updatedData
+          }));
+          if (refreshpage === true) {
+            window.location.reload();
+          }
+        }
+      })
+      .catch(error => {
         // Handle any errors
         toast.warn(`Error updating user: ${error}`, {
           position: "top-right",
           autoClose: 2000,
         });
         console.error('Error updating user:', error);
-    });
+      });
 
     console.log('Saved details:', userDetails);
-};
+  };
 
 
   const handleCloseModal = () => {
@@ -247,62 +240,62 @@ const ChatList = ({ chats, selectedChat, onChatSelect, loggedInUser,setLoggedInU
       </div>
 
       {/* Chat list */}
-<div className="list-group flex-grow-1 overflow-auto">
-  {filteredChats.length > 0 ? (
-    filteredChats.map((chat, index) => (
-      <div
-        key={index}
-        className={`list-group-item list-group-item-action d-flex align-items-center justify-content-between mb-2 border-0 rounded chat-list-item ${selectedChat && selectedChat.id === chat.id ? 'active-chat' : ''}`}
-        onClick={() => onChatSelect(chat)}
-        style={{ height: '80px' }}  
-      >
-        <div className="d-flex align-items-center me-3" onClick={(e) => { e.stopPropagation(); handleShowChatModal(index); }}>
-          {/* Render two participant avatars if chat.participants length is 2 */}
-          {chat.participants.length === 2 ? (
-            <div className="chat-avatar-container">
-              <img
-                src={chat.participants[0].avatar || avatar}
-                alt={`${chat.participants[0].name} avatar`}
-                className="chat-avatar chat-avatar-1"
-              />
-              <img
-                src={chat.participants[1].avatar || avatar}
-                alt={`${chat.participants[1].name} avatar`}
-                className="chat-avatar chat-avatar-2"
-              />
+      <div className="list-group flex-grow-1 overflow-auto">
+        {filteredChats.length > 0 ? (
+          filteredChats.map((chat, index) => (
+            <div
+              key={index}
+              className={`list-group-item list-group-item-action d-flex align-items-center justify-content-between mb-2 border-0 rounded chat-list-item ${selectedChat && selectedChat.id === chat.id ? 'active-chat' : ''}`}
+              onClick={() => onChatSelect(chat)}
+              style={{ height: '80px' }}
+            >
+              <div className="d-flex align-items-center me-3">
+                {/* Render two participant avatars if chat.participants length is 2 */}
+                {chat.participants.length === 2 ? (
+                  <div className="chat-avatar-container">
+                    <img
+                      src={chat.participants[0].avatar || avatar}
+                      alt={`${chat.participants[0].name} avatar`}
+                      className="chat-avatar chat-avatar-1"
+                    />
+                    <img
+                      src={chat.participants[1].avatar || avatar}
+                      alt={`${chat.participants[1].name} avatar`}
+                      className="chat-avatar chat-avatar-2"
+                    />
+                  </div>
+                ) : (
+                  <img
+                    src={loggedInUser.avatarUrl}
+                    alt="Chat avatar"
+                    className="rounded-circle chat-list-image"
+                    style={{ width: '30px', height: '30px' }}
+                  />
+                )}
+              </div>
+
+              <div className="w-100">
+                <h6 className="mb-1">{chat.name}</h6>
+                {/* Hide the latest message if chat is selected */}
+                {selectedChat && selectedChat.id === chat.id ? null : (
+                  <p className="mb-1 text-muted">{chat.latestMessage}</p>
+                )}
+              </div>
+
+              {/* Unread message badge */}
+              {!selectedChat || selectedChat.id !== chat.id ? (
+                chat.unreadMessages > 0 && (
+                  <span className="badge bg-primary rounded-pill">
+                    {chat.unreadMessages}
+                  </span>
+                )
+              ) : null}
             </div>
-          ) : (
-            <img
-              src={loggedInUser.avatarUrl}
-              alt="Chat avatar"
-              className="rounded-circle chat-list-image"
-              style={{ width: '30px', height: '30px' }}
-            />
-          )}
-        </div>
-
-        <div className="w-100">
-          <h6 className="mb-1">{chat.name}</h6>
-          {/* Hide the latest message if chat is selected */}
-          {selectedChat && selectedChat.id === chat.id ? null : (
-            <p className="mb-1 text-muted">{chat.latestMessage}</p>
-          )}
-        </div>
-
-        {/* Unread message badge */}
-        {!selectedChat || selectedChat.id !== chat.id ? (
-          chat.unreadMessages > 0 && (
-            <span className="badge bg-primary rounded-pill">
-              {chat.unreadMessages}
-            </span>
-          )
-        ) : null}
+          ))
+        ) : (
+          <p>No chats found</p>
+        )}
       </div>
-    ))
-  ) : (
-    <p>No chats found</p>
-  )}
-</div>
 
 
 
@@ -378,7 +371,7 @@ const ChatList = ({ chats, selectedChat, onChatSelect, loggedInUser,setLoggedInU
           <div className="modal-dialog">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">User Details</h5>
+                <h5 className="modal-title">User Details : {userDetails.name}</h5>
                 <button
                   type="button"
                   className="btn-close"
@@ -393,66 +386,76 @@ const ChatList = ({ chats, selectedChat, onChatSelect, loggedInUser,setLoggedInU
                     className="rounded-circle mb-3 text-center"
                     style={{ width: '100px', height: '100px', objectFit: 'cover' }}
                   />
-                  <span 
-              className={`online-badge-modal ${userDetails.onlineStatus.toLowerCase()}-status`}>
-            </span>
+                  <span
+                    className={`online-badge-modal ${userDetails.onlineStatus.toLowerCase()}-status`}>
+                  </span>
                 </div>
-                <hr></hr>
-                {/* Name Field */}
-                <div className="mb-3">
-                  <label htmlFor="logged-username" className="form-label">Username</label>
-                  <input type="text" className="form-control" id="logged-username" placeholder="Enter a username" value={userDetails.name} readOnly></input>
-                </div>
-
                 {/* Online Status Dropdown */}
-                <p><strong>Online Status:</strong></p>
                 {isEditing ? (
-                  <select
-                    name="onlineStatus"
-                    className="form-select mb-2"
-                    value={userDetails.onlineStatus}
-                    onChange={handleInputChange}
-                  >
-                    {statuses.map((status) => (
-                      <option key={status} value={status}>{status}</option>
-                    ))}
-                  </select>
+                  <div className="form-floating">
+                    <select
+                      name="onlineStatus"
+                      id="logged-status"
+                      className="form-select"
+                      value={userDetails.onlineStatus}
+                      onChange={handleInputChange}
+                    >
+                      {statuses.map((status) => (
+                        <option key={status} value={status}>{status}</option>
+                      ))}
+                    </select>
+                    <label for="logged-status">Online Status</label>
+                  </div>
                 ) : (
                   <p>{userDetails.onlineStatus}</p>
                 )}
-
+                <hr></hr>
                 {/* About Me Field */}
-                <label htmlFor="logged-about" className="form-label">About me</label>
-                {isEditing ? (<div className="mb-3">
-                  <textarea name="about"
-                    className="form-control mb-2"
-                    rows="3"
-                    value={userDetails.about}
-                    onChange={handleInputChange}></textarea>
-                </div>) : (
-                  <textarea name="about"
-                    className="form-control mb-2"
-                    rows="3"
-                    value={userDetails.about} readOnly></textarea>
-                )}
+                <div className="form-floating">
+                  {isEditing ? (
+                    <textarea name="about"
+                      className="form-control"
+                      rows="3"
+                      value={userDetails.about}
+                      onChange={handleInputChange}></textarea>
+                  ) : (
+                    <textarea name="about"
+                      className="form-control"
+                      rows="3"
+                      defaultValue={userDetails.about} readOnly></textarea>
+                  )}
+                  <label htmlFor="logged-about">About me</label>
+                </div>
 
-
+                <br></br>
                 {/* Timezone Dropdown */}
-                <label htmlFor="timezone" className="form-label">Timezone</label>
-                {isEditing ? (
-                  <select
-                    name="timezone"
-                    className="form-select mb-2"
-                    value={userDetails.timezone}
-                    onChange={handleInputChange}
-                  >
-                    {timezones.map((zone) => (
-                      <option key={zone} value={zone}>{zone}</option>
-                    ))}
-                  </select>
-                ) : (
-                  <p>{userDetails.timezone}</p>
-                )}
+                <div className="form-floating">
+                  {isEditing ? (
+                    <select
+                      name="timezone"
+                      id="logged-timezone"
+                      className="form-select"
+                      value={userDetails.timezone}
+                      onChange={handleInputChange}
+                    >
+                      {timezones.map((zone) => (
+                        <option key={zone} value={zone}>{zone}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <select
+                      name="timezone"
+                      id="logged-timezone"
+                      className="form-select"
+                      defaultValue={userDetails.timezone}
+                    >
+                      {timezones.map((zone) => (
+                        <option key={zone} value={zone}>{zone}</option>
+                      ))}
+                    </select>
+                  )}
+                  <label htmlFor="logged-timezone">Timezone</label>
+                </div>
 
               </div>
               <div className="modal-footer">
@@ -485,49 +488,6 @@ const ChatList = ({ chats, selectedChat, onChatSelect, loggedInUser,setLoggedInU
           </div>
         </div>
       )}
-
-      {/* Modal for each chat details */}
-      {chats.map((chat, index) => (
-        showChatModal === index && (
-          <div
-            key={index}
-            className="modal fade show"
-            style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}
-          >
-            <div className="modal-dialog">
-              <div className="modal-content">
-                <div className="modal-header">
-                  <h5 className="modal-title">{chat.name} Details</h5>
-                  <button
-                    type="button"
-                    className="btn-close"
-                    onClick={handleCloseChatModal}
-                  ></button>
-                </div>
-                <div className="modal-body text-center">
-                  <img
-                    src={'https://via.placeholder.com/150'}  // Placeholder image for chat user
-                    alt="Chat User"
-                    className="rounded-circle mb-3"
-                    style={{ width: '100px', height: '100px', objectFit: 'cover' }}
-                  />
-                  <p><strong>Name:</strong> {chat.name}</p>
-                  <p><strong>Last Message:</strong> {chat.latestMessage}</p>
-                </div>
-                <div className="modal-footer">
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={handleCloseChatModal}
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )
-      ))}
     </div>
   );
 };
