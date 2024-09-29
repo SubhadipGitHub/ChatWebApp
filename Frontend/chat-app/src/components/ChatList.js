@@ -6,11 +6,12 @@ import 'react-toastify/dist/ReactToastify.css';
 import { createAvatar } from '@dicebear/core';
 import { lorelei } from '@dicebear/collection';
 
-const ChatList = ({ chats, selectedChat, onChatSelect, loggedInUser, setLoggedInUser, onAddChat }) => {
+const ChatList = ({ chats, selectedChat, onChatSelect, loggedInUser, setLoggedInUser,onlineUsers, onAddChat }) => {
   const [showUserModal, setShowUserModal] = useState(false); // Modal for logged-in user
   const [searchQuery, setSearchQuery] = useState(''); // State for search query
   const [showAddChatModal, setShowAddChatModal] = useState(false); // Modal for adding a chat
   const [newChatName, setNewChatName] = useState(''); // State for new chat name
+  const [onlineSearchQuery, setOnlineSearchQuery] = useState('');
 
   const [isEditing, setIsEditing] = useState(false); // Track editing state
   const [userDetails, setUserDetails] = useState({
@@ -214,11 +215,16 @@ const encodedCredentials = btoa(`${username}:${password}`);
     }
   };
 
-
   // Filter chats based on search query
   const filteredChats = chats.filter(chat =>
     chat.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const filteredOnlineUsers = onlineUsers.filter((user) =>
+    user.toLowerCase().includes(onlineSearchQuery.toLowerCase())
+  );
+
+
 
   useEffect(() => {
     if (loggedInUser) {
@@ -234,86 +240,163 @@ const encodedCredentials = btoa(`${username}:${password}`);
 
   return (
     <div className="chat-header chat-list-container p-3 d-flex flex-column" style={{ height: '100vh', borderRight: '1px solid #ddd' }}>
-      {/* Chats header */}
-      <div className="chat-header-title mb-3 d-flex justify-content-between align-items-center p-2 bg-gradient shadow-sm">
-        <h5 className="chat-title mb-0 d-flex align-items-center">
-          <i className="fas fa-comments me-2 text-primary chat-icon"></i> Chats
-        </h5>
-        {/* Add Chat Button */}
-        <button className="btn btn-success" onClick={handleShowAddChatModal}>
-          <i className="fas fa-plus me-2"></i> Add Chat
+    {/* Chats header */}
+    <div className="chat-header-title mb-3 d-flex justify-content-between align-items-center p-2 bg-gradient shadow-sm">
+      <h5 className="chat-title mb-0 d-flex align-items-center">
+        <i className="fas fa-comments me-2 text-primary chat-icon"></i> Chatify
+      </h5>
+      {/* Add Chat Button */}
+      <button className="btn btn-success" onClick={handleShowAddChatModal}>
+        <i className="fas fa-plus me-2"></i> Add Chat
+      </button>
+    </div>
+
+    {/* Tabs */}
+    <ul className="nav nav-tabs" id="chatTabs" role="tablist">
+      <li className="nav-item" role="presentation">
+        <button
+          className="nav-link active"
+          id="chats-tab"
+          data-bs-toggle="tab"
+          data-bs-target="#chats"
+          type="button"
+          role="tab"
+          aria-controls="chats"
+          aria-selected="true"
+        >
+          Chats
         </button>
+      </li>
+      <li className="nav-item" role="presentation">
+        <button
+          className="nav-link"
+          id="online-users-tab"
+          data-bs-toggle="tab"
+          data-bs-target="#online-users"
+          type="button"
+          role="tab"
+          aria-controls="online-users"
+          aria-selected="false"
+        >
+          Online Users
+        </button>
+      </li>
+    </ul>
+
+    {/* Tab Content */}
+    <div className="tab-content" id="chatTabsContent" style={{ height: '100%', overflow: 'auto' }}>
+      {/* Chat List Tab */}
+      <div
+        className="tab-pane fade show active"
+        id="chats"
+        role="tabpanel"
+        aria-labelledby="chats-tab"
+      >
+        {/* Search bar */}
+        <div className="mb-3">
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Search chats..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
+        {/* Chat list */}
+        <div className="list-group flex-grow-1 overflow-auto">
+          {filteredChats.length > 0 ? (
+            filteredChats.map((chat, index) => (
+              <div
+                key={index}
+                className={`list-group-item list-group-item-action d-flex align-items-center justify-content-between mb-2 border-0 rounded chat-list-item ${selectedChat && selectedChat.id === chat.id ? 'active-chat' : ''}`}
+                onClick={() => onChatSelect(chat)}
+                style={{ height: '80px' }}
+              >
+                <div className="d-flex align-items-center me-3">
+                  {chat.participants.length === 2 ? (
+                    <div className="chat-avatar-container">
+                      <img
+                        src={chat.participants[0].avatar || avatar}
+                        alt={`${chat.participants[0].name} avatar`}
+                        className="chat-avatar chat-avatar-1"
+                      />
+                      <img
+                        src={chat.participants[1].avatar || avatar}
+                        alt={`${chat.participants[1].name} avatar`}
+                        className="chat-avatar chat-avatar-2"
+                      />
+                    </div>
+                  ) : (
+                    <img
+                      src={loggedInUser.avatarUrl}
+                      alt="Chat avatar"
+                      className="rounded-circle chat-list-image"
+                      style={{ width: '30px', height: '30px' }}
+                    />
+                  )}
+                </div>
+
+                <div className="w-100">
+                  <h6 className="mb-1">{chat.name}</h6>
+                  {selectedChat && selectedChat.id === chat.id ? null : (
+                    <p className="mb-1 text-muted">{chat.latestMessage}</p>
+                  )}
+                </div>
+
+                {!selectedChat || selectedChat.id !== chat.id ? (
+                  chat.unreadMessages > 0 && (
+                    <span className="badge bg-primary rounded-pill">
+                      {chat.unreadMessages}
+                    </span>
+                  )
+                ) : null}
+              </div>
+            ))
+          ) : (
+            <p>No chats found</p>
+          )}
+        </div>
       </div>
 
-
-      {/* Search bar */}
-      <div className="mb-3">
-        <input
-          type="text"
-          className="form-control"
-          placeholder="Search chats..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-      </div>
-
-      {/* Chat list */}
-      <div className="list-group flex-grow-1 overflow-auto">
-        {filteredChats.length > 0 ? (
-          filteredChats.map((chat, index) => (
-            <div
-              key={index}
-              className={`list-group-item list-group-item-action d-flex align-items-center justify-content-between mb-2 border-0 rounded chat-list-item ${selectedChat && selectedChat.id === chat.id ? 'active-chat' : ''}`}
-              onClick={() => onChatSelect(chat)}
-              style={{ height: '80px' }}
-            >
-              <div className="d-flex align-items-center me-3">
-                {/* Render two participant avatars if chat.participants length is 2 */}
-                {chat.participants.length === 2 ? (
-                  <div className="chat-avatar-container">
-                    <img
-                      src={chat.participants[0].avatar || avatar}
-                      alt={`${chat.participants[0].name} avatar`}
-                      className="chat-avatar chat-avatar-1"
-                    />
-                    <img
-                      src={chat.participants[1].avatar || avatar}
-                      alt={`${chat.participants[1].name} avatar`}
-                      className="chat-avatar chat-avatar-2"
-                    />
-                  </div>
-                ) : (
+      {/* Online Users Tab */}
+      <div
+        className="tab-pane fade"
+        id="online-users"
+        role="tabpanel"
+        aria-labelledby="online-users-tab"
+      >
+        <div className="mb-3">
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Search online users..."
+              value={onlineSearchQuery}
+              onChange={(e) => setOnlineSearchQuery(e.target.value)}
+            />
+          </div>
+        <div className="list-group flex-grow-1 overflow-auto">
+        {filteredOnlineUsers.length > 0 ? (
+              filteredOnlineUsers.map((user, index) => (
+              <div key={index} className="list-group-item d-flex align-items-center justify-content-between mb-2 border-0 rounded">
+                <div className="d-flex align-items-center">
                   <img
-                    src={loggedInUser.avatarUrl}
-                    alt="Chat avatar"
-                    className="rounded-circle chat-list-image"
-                    style={{ width: '30px', height: '30px' }}
+                    src={user.avatarUrl || avatar}
+                    alt={`${user.name} avatar`}
+                    className="rounded-circle me-3"
+                    style={{ width: '40px', height: '40px' }}
                   />
-                )}
+                  <span>{user}</span>
+                </div>
+                <span className="badge bg-success">Online</span>
               </div>
-
-              <div className="w-100">
-                <h6 className="mb-1">{chat.name}</h6>
-                {/* Hide the latest message if chat is selected */}
-                {selectedChat && selectedChat.id === chat.id ? null : (
-                  <p className="mb-1 text-muted">{chat.latestMessage}</p>
-                )}
-              </div>
-
-              {/* Unread message badge */}
-              {!selectedChat || selectedChat.id !== chat.id ? (
-                chat.unreadMessages > 0 && (
-                  <span className="badge bg-primary rounded-pill">
-                    {chat.unreadMessages}
-                  </span>
-                )
-              ) : null}
-            </div>
-          ))
-        ) : (
-          <p>No chats found</p>
-        )}
+            ))
+          ) : (
+            <p>No users online</p>
+          )}
+        </div>
       </div>
+    </div>
 
 
 

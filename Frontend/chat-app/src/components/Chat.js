@@ -126,7 +126,7 @@ const ChatPage = () => {
   return (
     <div className="chat-page-container">
       <div className="chat-list-container">
-        <ChatList chats={chats} onChatSelect={handleChatSelect} loggedInUser={loggedInUser} setLoggedInUser={setLoggedInUser} selectedChat={selectedChat} onAddChat={handleAddChatToList} />
+        <ChatList chats={chats} onChatSelect={handleChatSelect} loggedInUser={loggedInUser} setLoggedInUser={setLoggedInUser} onlineUsers={onlineUsers} selectedChat={selectedChat} onAddChat={handleAddChatToList} />
       </div>
 
       <div className={`chat-detail-container ${selectedChat ? 'active' : ''}`}>
