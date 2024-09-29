@@ -125,15 +125,25 @@ const ChatPage = () => {
   };
 
   // Memoize the update function using useCallback
-  const updateLatestMessage = useCallback((chat_id, newMessage) => {
+  const updateLatestMessage = useCallback((chat_id, newMessage,read) => {
     //console.log("update latest message");
     //console.log(`Before update`);
     //console.log(chats);
+    if(read===true)
+    {
+      setChats((prevChats) =>
+        prevChats.map((chat) =>
+          chat.id === chat_id ? { ...chat, unreadMessages:0 } : chat
+        )
+      );
+    }
+    else{
     setChats((prevChats) =>
       prevChats.map((chat) =>
         chat.id === chat_id ? { ...chat, latestMessage: newMessage,unreadMessages:chat.unreadMessages+1 } : chat
       )
     );
+  }
     //console.log(`After update ${chat_id}-${newMessage}`);
     //console.log(chats);
   }, [setChats]); // Dependency array should include setChats

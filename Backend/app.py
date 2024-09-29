@@ -80,6 +80,15 @@ async def user_connected(sid, data):
         online_user_list = [item[0] for item in online_users]
         #print(f'Online user list {online_user_list} when connection of {username[0]}')
         await sio.emit('user_online', {'username': username,'online_users':online_user_list})
+        
+@sio.event
+async def read_message(sid, data):
+    chatid = data.get('chatid')
+    try:
+        await chat_collection.update_one({"_id":chatid},{"$set": {"unreadMessageCounter": 0}})
+    except:
+        print("Unread message counter update failed")
+    
 
 @sio.event
 async def message(sid, data):

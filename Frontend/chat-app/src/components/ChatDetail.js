@@ -129,7 +129,14 @@ const ChatDetail = ({ chatId, chatName, chatimage,onUpdateMessage, chatparticipa
 
         if (!response.ok) throw new Error('Failed to fetch messages');
         const data = await response.json();
+        // Set the messages in state
         setMessages(data.messages);
+
+        // Check if there are any messages, and if so, emit the 'read_message' event
+      if (data.messages.length > 0) {
+        socket.emit('read_message', { chatid: chatId });
+        onUpdateMessage(chatId,null,true);
+      }
       } catch (error) {
         console.error('Error fetching messages:', error);
       }
@@ -149,7 +156,7 @@ const ChatDetail = ({ chatId, chatName, chatimage,onUpdateMessage, chatparticipa
         : msg.content;
 
         // Call the update function passed from ChatList to update the latest message
-        onUpdateMessage(msg.chat_id, truncatedContent);
+        onUpdateMessage(msg.chat_id, truncatedContent,false);
         if (msg.chat_id !== chatId) {
           
           const received_msg = `${truncatedContent}`;
@@ -179,6 +186,8 @@ const ChatDetail = ({ chatId, chatName, chatimage,onUpdateMessage, chatparticipa
       }
       if (msg.chat_id === chatId) {
         setMessages((prevMessages) => [...prevMessages, msg]);
+        socket.emit('read_message', { chatid: chatId });
+        onUpdateMessage(chatId,null,true);
       }
     };
 
