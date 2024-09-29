@@ -102,11 +102,35 @@ async def message(sid, data):
     }
     #print(message_data)
     update_query = {"_id": chat_id}
-    # Save message in MongoDB
-    await chat_collection.update_one(
-        update_query,
-        {"$set": {"last_updated":datetime.utcnow(),"last_updated_by":data['sender'],"latestMessage":data['content'][:50]},"$push": {"messages": message_data}}
-    )
+    # Find the current chat document to check the last_updated_by field
+    chat = await chat_collection.find_one(update_query)
+
+    if chat:
+        # Determine how to update the unreadMessageCounter
+        if chat['last_updated_by'] == data['sender']:
+            # If the sender is the same as last_updated_by, increment the unreadMessageCounter by 1
+            unread_message_update = {"$inc": {"unreadMessageCounter": 1}}
+        else:
+            # If the sender is different, reset the unreadMessageCounter to 1
+            unread_message_update = {"$set": {"unreadMessageCounter": 1}}
+
+        # Combine the other updates with the unreadMessageCounter logic
+        update_data = {
+            "$set": {
+                "last_updated": datetime.utcnow(),
+                "last_updated_by": data['sender'],
+                "latestMessage": data['content'][:50],  # Save the first 50 characters as preview
+            },
+            "$push": {
+                "messages": message_data  # Add the new message to the messages array
+            }
+        }
+
+        # Perform the update to the MongoDB document, including unreadMessageCounter changes
+        await chat_collection.update_one(
+            update_query,
+            {**update_data, **unread_message_update}  # Merge the two update operations
+        )
 
     message_data['chat_id'] = chat_id
 

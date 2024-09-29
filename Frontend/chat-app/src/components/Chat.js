@@ -42,7 +42,8 @@ const ChatPage = () => {
         name: chat.name,
         image: chat.image,
         participants: chat.participants || [],
-        latestMessage:chat.latestMessage
+        latestMessage:chat.latestMessage,
+        unreadMessages:chat.unreadMessageCounter
       }));
 
       setChats(formattedChats);
@@ -130,7 +131,7 @@ const ChatPage = () => {
     //console.log(chats);
     setChats((prevChats) =>
       prevChats.map((chat) =>
-        chat.id === chat_id ? { ...chat, latestMessage: newMessage } : chat
+        chat.id === chat_id ? { ...chat, latestMessage: newMessage,unreadMessages:chat.unreadMessages+1 } : chat
       )
     );
     //console.log(`After update ${chat_id}-${newMessage}`);
