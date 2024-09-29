@@ -310,7 +310,8 @@ async def create_chat(chat: ChatCreate, username: str = Depends(authenticate_use
         "participants": unique_chat_paticipants_list,
         "created_at": datetime.utcnow(),
         "created_by": username, # Add the created_by field
-        "last_updated":datetime.utcnow()
+        "last_updated":datetime.utcnow(),
+        "last_updated_by": username
     }
     
     new_chat = await chat_collection.insert_one(chat_data)

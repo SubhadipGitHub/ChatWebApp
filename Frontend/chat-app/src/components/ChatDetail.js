@@ -28,7 +28,7 @@ const password = localStorage.getItem('password'); // Get password from local st
 // Encode the credentials for Basic Auth
 const encodedCredentials = btoa(`${username}:${password}`);
 
-const ChatDetail = ({ chatId, chatName, chatimage,onUpdateMessage, chatparticipants, loggedInUser, onlineusers }) => {
+const ChatDetail = ({ chatId, chatName, chatimage, onUpdateMessage, chatparticipants, loggedInUser, onlineusers }) => {
   const [message, setMessage] = useState('');
   const [onlinestatus, setOnlineStatus] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false); // State to show/hide emoji picker
@@ -69,10 +69,12 @@ const ChatDetail = ({ chatId, chatName, chatimage,onUpdateMessage, chatparticipa
         const baseURI = 'http://localhost:8000';
         const endpoint = `${baseURI}/users/${name}`;
 
-        const response = await fetch(endpoint, { method: 'GET' ,headers: {
-          'Authorization': `Basic ${encodedCredentials}`,
-          'Content-Type': 'application/json',
-      },});
+        const response = await fetch(endpoint, {
+          method: 'GET', headers: {
+            'Authorization': `Basic ${encodedCredentials}`,
+            'Content-Type': 'application/json',
+          },
+        });
         if (!response.ok) {
           throw new Error(`Error: ${response.statusText}`);
         }
@@ -133,10 +135,10 @@ const ChatDetail = ({ chatId, chatName, chatimage,onUpdateMessage, chatparticipa
         setMessages(data.messages);
 
         // Check if there are any messages, and if so, emit the 'read_message' event
-      if (data.messages.length > 0) {
-        socket.emit('read_message', { chatid: chatId });
-        onUpdateMessage(chatId,null,true);
-      }
+        if (data.messages.length > 0) {
+          socket.emit('read_message', { chatid: chatId });
+          onUpdateMessage(chatId, null, true);
+        }
       } catch (error) {
         console.error('Error fetching messages:', error);
       }
@@ -147,18 +149,18 @@ const ChatDetail = ({ chatId, chatName, chatimage,onUpdateMessage, chatparticipa
     const handleNewMessage = (msg) => {
       console.log(msg);
       console.log(loggedInUser.name);
-      
+
       if (Array.isArray(msg.receiver) && msg.receiver.includes(loggedInUser.name)) {
         //console.log(chatId);
         // Strip the message content to the first 50 characters
         const truncatedContent = msg.content.length > 50
-        ? msg.content.slice(0, 50) + '...'
-        : msg.content;
+          ? msg.content.slice(0, 50) + '...'
+          : msg.content;
 
         // Call the update function passed from ChatList to update the latest message
-        onUpdateMessage(msg.chat_id, truncatedContent,false);
+        onUpdateMessage(msg.chat_id, truncatedContent, false);
         if (msg.chat_id !== chatId) {
-          
+
           const received_msg = `${truncatedContent}`;
           //console.log(received_msg);
           playSound(); // Play the sound when the toast is triggered
@@ -187,7 +189,7 @@ const ChatDetail = ({ chatId, chatName, chatimage,onUpdateMessage, chatparticipa
       if (msg.chat_id === chatId) {
         setMessages((prevMessages) => [...prevMessages, msg]);
         socket.emit('read_message', { chatid: chatId });
-        onUpdateMessage(chatId,null,true);
+        onUpdateMessage(chatId, null, true);
       }
     };
 
@@ -197,7 +199,7 @@ const ChatDetail = ({ chatId, chatName, chatimage,onUpdateMessage, chatparticipa
     return () => {
       socket.off("new_message", handleNewMessage);
     };
-  }, [chatId, loggedInUser,onUpdateMessage]);
+  }, [chatId, loggedInUser, onUpdateMessage]);
 
   // Scroll to the bottom whenever messages change
   useEffect(() => {
@@ -258,7 +260,7 @@ const ChatDetail = ({ chatId, chatName, chatimage,onUpdateMessage, chatparticipa
           src={receiverDetails.avatarUrl || 'https://via.placeholder.com/50'}
           alt="Chat"
           className="chat-detail-image rounded-circle me-3"
-          style={{ width: '50px', height: '50px',cursor: 'pointer' }}
+          style={{ width: '50px', height: '50px', cursor: 'pointer' }}
         />
         <div className="chat-header-info">
           <h5 className="mb-0">{receiverDetails.name}</h5>
@@ -284,27 +286,27 @@ const ChatDetail = ({ chatId, chatName, chatimage,onUpdateMessage, chatparticipa
               <button type="button" className="btn-close" onClick={handleCloseModal}></button>
             </div>
             <div className="modal-body align-items-center text-center">
-            <div className="profile-image-wrapper">
-              <img
-                src={receiverDetails.avatarUrl || 'https://via.placeholder.com/100'}
-                alt="User"
-                className="rounded-circle me-3 profile-image"
-                style={{ width: '100px', height: '100px' }}
-              />
-               {/* Online status badge */}
-               <span className={`online-badge-receiver ${onlinestatus ? 'online' : 'offline'}-status`}></span>
-               </div>
-               <hr></hr>
-               <div className="form-floating">                  
-                  <input
-                    type="text"
-                    className="form-control"
-                    id="aboutInput"
-                    value={receiverDetails.about}
-                    readOnly
-                  />
-                  <label htmlFor="aboutInput">About</label>
-            </div>
+              <div className="profile-image-wrapper">
+                <img
+                  src={receiverDetails.avatarUrl || 'https://via.placeholder.com/100'}
+                  alt="User"
+                  className="rounded-circle me-3 profile-image"
+                  style={{ width: '100px', height: '100px' }}
+                />
+                {/* Online status badge */}
+                <span className={`online-badge-receiver ${onlinestatus ? 'online' : 'offline'}-status`}></span>
+              </div>
+              <hr></hr>
+              <div className="form-floating">
+                <input
+                  type="text"
+                  className="form-control"
+                  id="aboutInput"
+                  value={receiverDetails.about}
+                  readOnly
+                />
+                <label htmlFor="aboutInput">About</label>
+              </div>
             </div>
             <div className="modal-footer">
               <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>Close</button>
@@ -314,44 +316,52 @@ const ChatDetail = ({ chatId, chatName, chatimage,onUpdateMessage, chatparticipa
       </div>
 
       <div className="chat-messages flex-grow-1 overflow-auto p-3" ref={chatMessagesRef}>
-        {messages.map((msg, index) => {
-          const currentMessageDate = new Date(msg.time);
-          const currentDateLabel = formatDate(currentMessageDate);
-          const previousMessageDate = index > 0 ? new Date(messages[index - 1].time) : null;
-          const previousDateLabel = previousMessageDate ? formatDate(previousMessageDate) : null;
-          const showDateSeparator = index === 0 || currentDateLabel !== previousDateLabel;
+  {messages.length === 0 ? (
+    <div className="d-flex flex-column align-items-center justify-content-center h-100">
+      <i className="bi bi-chat-dots-fill" style={{ fontSize: '3rem', color: '#007bff' }}></i>
+      <h2 className="h4 mt-3 text-primary">No messages yet</h2>
+      <p className="text-muted">Say hi to start a conversation</p>
+    </div>
+  ) : (
+    messages.map((msg, index) => {
+      const currentMessageDate = new Date(msg.time);
+      const currentDateLabel = formatDate(currentMessageDate);
+      const previousMessageDate = index > 0 ? new Date(messages[index - 1].time) : null;
+      const previousDateLabel = previousMessageDate ? formatDate(previousMessageDate) : null;
+      const showDateSeparator = index === 0 || currentDateLabel !== previousDateLabel;
 
-          return (
-            <div key={index}>
-              {showDateSeparator && (
-                <div className="date-separator text-center my-2">
-                  <span className="badge bg-light text-dark">{currentDateLabel}</span>
-                </div>
-              )}
-
-              <div className={`message ${msg.sender === loggedInUser.name ? 'message-sent' : 'message-received'} d-flex`}>
-                <img
-                  src={msg.sender === loggedInUser.name ? loggedInUser.avatarUrl : receiverDetails.avatarUrl}
-                  alt={msg.sender}
-                  className="rounded-circle me-2"
-                  style={{ width: '40px', height: '40px' }}
-                />
-                <div className="message-content">
-                  <p>{msg.content}</p>
-                  <span className="message-time">
-                    {currentMessageDate.toLocaleTimeString([], {
-                      hour: 'numeric',
-                      minute: '2-digit',
-                      hour12: true,
-                      timeZone: 'Asia/Kolkata'
-                    })}
-                  </span>
-                </div>
-              </div>
+      return (
+        <div key={index}>
+          {showDateSeparator && (
+            <div className="date-separator text-center my-2">
+              <span className="badge bg-light text-dark">{currentDateLabel}</span>
             </div>
-          );
-        })}
-      </div>
+          )}
+          <div className={`message ${msg.sender === loggedInUser.name ? 'message-sent' : 'message-received'} d-flex`}>
+            <img
+              src={msg.sender === loggedInUser.name ? loggedInUser.avatarUrl : receiverDetails.avatarUrl}
+              alt={msg.sender}
+              className="rounded-circle me-2"
+              style={{ width: '40px', height: '40px' }}
+            />
+            <div className="message-content">
+              <p>{msg.content}</p>
+              <span className="message-time">
+                {currentMessageDate.toLocaleTimeString([], {
+                  hour: 'numeric',
+                  minute: '2-digit',
+                  hour12: true,
+                  timeZone: 'Asia/Kolkata',
+                })}
+              </span>
+            </div>
+          </div>
+        </div>
+      );
+    })
+  )}
+</div>
+
 
       <div className="chat-input p-3 d-flex align-items-center bg-light border-top">
         <button className="emoji-picker-button" onClick={() => setShowEmojiPicker(!showEmojiPicker)}>

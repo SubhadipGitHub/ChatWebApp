@@ -124,6 +124,15 @@ To run this application, ensure that you have the following installed:
 ### Run the Backend
 
 `cd Backend`
+`create a .env file`
+`
+MONGO_URI='xxxxxxxx'
+ADMIN_USER='admin'
+ADMIN_PASS='password'
+ADMIN_EMAIL='admin@admin.com'
+ADMIN_GENDER='male'
+ADMIN_TIMEZONE='Asia/Kolkata'
+`
 `uvicorn app:app --reload`
 
 #### Run the Frontend

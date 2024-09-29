@@ -154,19 +154,28 @@ const ChatPage = () => {
         <ChatList chats={chats} onUpdateMessage={updateLatestMessage} onChatSelect={handleChatSelect} loggedInUser={loggedInUser} setLoggedInUser={setLoggedInUser} onlineUsers={onlineUsers} selectedChat={selectedChat} onAddChat={handleAddChatToList} />
       </div>
 
-      <div className={`chat-detail-container ${selectedChat ? 'active' : ''}`}>
-        {selectedChat && (
-          <ChatDetail 
-            chatId={selectedChat.id}
-            chatimage={selectedChat.image}
-            chatName={selectedChat.name}
-            loggedInUser={loggedInUser}
-            onlineusers={onlineUsers}
-            chatparticipants={selectedChat.participants}
-            onUpdateMessage={updateLatestMessage}
-          />
-        )}
+      <div className={`col-md-8 chat-detail-container d-flex align-items-center justify-content-center ${selectedChat ? 'active' : ''}`}>
+      {selectedChat ? (
+        <ChatDetail
+          chatId={selectedChat.id}
+          chatimage={selectedChat.image}
+          chatName={selectedChat.name}
+          loggedInUser={loggedInUser}
+          onlineusers={onlineUsers}
+          chatparticipants={selectedChat.participants}
+          onUpdateMessage={updateLatestMessage}
+        />
+      ) : (
+        // Render Help Text when no chat is selected        
+        <div className="help-text text-center animate-fade-in">        
+        <h2 className="h4 mb-3 text-primary">No Chat Selected</h2>
+        <div className="mb-4">
+          <i className="bi bi-chat-dots-fill icon-style"></i>
+        </div>
+        <p className="text-muted">Please select a chat from the list to start messaging.</p>
       </div>
+      )}
+    </div>
 
       <ToastContainer />
     </div>
