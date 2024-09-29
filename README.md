@@ -15,8 +15,6 @@ This chat system is designed to support real-time messaging, user authentication
 
 Here is an overview of the system architecture:
 
-![Architecture Diagram](assets/system-architecture.png)
-
 In this architecture:
 - The **frontend** is built using **React** and communicates with the backend using **REST API** calls for user management and fetching chat history.
 - **Socket.io** is used for real-time communication between clients.
@@ -41,8 +39,6 @@ Key features of the FastAPI backend:
 - **GET /chats/{user_id}:** Retrieve all messages for a user.
 - **WebSocket /ws/chat:** Real-time communication channel for chat.
 
-![FastAPI Endpoints Diagram](assets/api-endpoints.png)
-
 ---
 
 ## Frontend (React + Bootstrap)
@@ -61,7 +57,11 @@ Key components:
 
 Here's an example of how the frontend layout is structured:
 
-![UI Layout](assets/ui-layout.png)
+![UI Layout Register](Frontend\chat-app\public\Demo-register.png)
+
+![UI Layout Login](Frontend\chat-app\public\Demo-login.png)
+
+![UI Layout Chat](Frontend\chat-app\public\Demo-chat.png)
 
 ---
 
@@ -69,7 +69,6 @@ Here's an example of how the frontend layout is structured:
 
 Real-time messaging is achieved with **Socket.io** on both the backend and frontend. The FastAPI WebSocket route connects clients to the chat room and broadcasts new messages to all participants.
 
-![Socket.io Flow](assets/socket-io-flow.png)
 
 - **Client-Side:** Messages sent from the chat input are transmitted via WebSocket to the backend.
 - **Server-Side:** FastAPI WebSocket handles broadcasting the messages to the appropriate chat participants.
@@ -94,13 +93,12 @@ We use **MongoDB Atlas** to store user profiles, chat lists, and message history
   - `last_message`
   - `created_at`
 
-- **Messages Collection:**
+- **Messages Collection:**(Inside chats)
   - `chat_id`
-  - `sender_id`
+  - `sender`
+  - `receiver`
   - `content`
   - `timestamp`
-
-![MongoDB Schema Diagram](assets/mongodb-schema.png)
 
 ---
 
@@ -118,8 +116,7 @@ To run this application, ensure that you have the following installed:
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/yourusername/chat-app
-   cd chat-app
+   git clone https://github.com/SubhadipGitHub/ChatWebApp.git
 
 ### Run the Backend
 
@@ -144,3 +141,7 @@ ADMIN_TIMEZONE='Asia/Kolkata'
 #### Issues
 
 Sometimes if you are working in Mongo DB Atlas the network access for local might change.Either you add current IP or give it all IP permissionIn production usually give production domain IP permission.
+
+#### Mentions
+
+https://multiavatar.com/
