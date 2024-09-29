@@ -1,4 +1,4 @@
-import React, { useState, useEffect ,useRef} from 'react';
+import React, { useState, useEffect ,useRef, useCallback} from 'react';
 import ChatList from './ChatList';
 import ChatDetail from './ChatDetail';
 import './Chat.css';
@@ -123,10 +123,24 @@ const ChatPage = () => {
     fetchChats();
   };
 
+  // Memoize the update function using useCallback
+  const updateLatestMessage = useCallback((chat_id, newMessage) => {
+    //console.log("update latest message");
+    //console.log(`Before update`);
+    //console.log(chats);
+    setChats((prevChats) =>
+      prevChats.map((chat) =>
+        chat.id === chat_id ? { ...chat, latestMessage: newMessage } : chat
+      )
+    );
+    //console.log(`After update ${chat_id}-${newMessage}`);
+    //console.log(chats);
+  }, [setChats]); // Dependency array should include setChats
+
   return (
     <div className="chat-page-container">
       <div className="chat-list-container">
-        <ChatList chats={chats} onChatSelect={handleChatSelect} loggedInUser={loggedInUser} setLoggedInUser={setLoggedInUser} onlineUsers={onlineUsers} selectedChat={selectedChat} onAddChat={handleAddChatToList} />
+        <ChatList chats={chats} onUpdateMessage={updateLatestMessage} onChatSelect={handleChatSelect} loggedInUser={loggedInUser} setLoggedInUser={setLoggedInUser} onlineUsers={onlineUsers} selectedChat={selectedChat} onAddChat={handleAddChatToList} />
       </div>
 
       <div className={`chat-detail-container ${selectedChat ? 'active' : ''}`}>
@@ -138,6 +152,7 @@ const ChatPage = () => {
             loggedInUser={loggedInUser}
             onlineusers={onlineUsers}
             chatparticipants={selectedChat.participants}
+            onUpdateMessage={updateLatestMessage}
           />
         )}
       </div>

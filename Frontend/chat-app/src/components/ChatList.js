@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import '@fortawesome/fontawesome-free/css/all.min.css'; // Import FontAwesome CSS
 import './ChatList.css'; // Import custom CSS
 import { toast } from 'react-toastify';
@@ -6,12 +6,13 @@ import 'react-toastify/dist/ReactToastify.css';
 import { createAvatar } from '@dicebear/core';
 import { lorelei } from '@dicebear/collection';
 
-const ChatList = ({ chats, selectedChat, onChatSelect, loggedInUser, setLoggedInUser,onlineUsers, onAddChat }) => {
+const ChatList = ({ chats, selectedChat, onChatSelect, loggedInUser, setLoggedInUser, onlineUsers, onAddChat }) => {
   const [showUserModal, setShowUserModal] = useState(false); // Modal for logged-in user
   const [searchQuery, setSearchQuery] = useState(''); // State for search query
   const [showAddChatModal, setShowAddChatModal] = useState(false); // Modal for adding a chat
   const [newChatName, setNewChatName] = useState(''); // State for new chat name
   const [onlineSearchQuery, setOnlineSearchQuery] = useState('');
+  const inputRef = useRef(null);
 
   const [isEditing, setIsEditing] = useState(false); // Track editing state
   const [userDetails, setUserDetails] = useState({
@@ -22,10 +23,10 @@ const ChatList = ({ chats, selectedChat, onChatSelect, loggedInUser, setLoggedIn
   });
 
   const username = localStorage.getItem('username'); // Get username from local storage
-const password = localStorage.getItem('password'); // Get password from local storage
+  const password = localStorage.getItem('password'); // Get password from local storage
 
-// Encode the credentials for Basic Auth
-const encodedCredentials = btoa(`${username}:${password}`);
+  // Encode the credentials for Basic Auth
+  const encodedCredentials = btoa(`${username}:${password}`);
 
   const timezones = [
     "Africa/Cairo",
@@ -38,7 +39,7 @@ const encodedCredentials = btoa(`${username}:${password}`);
     "America/Los_Angeles",
     "Asia/Singapore",
     "America/Sao_Paulo"
-]; // Sample timezones
+  ]; // Sample timezones
   const statuses = ['Online', 'Offline']; // Sample statuses ['Online', 'Offline', 'Away', 'Busy']
 
   // Function to handle modal open/close for logged-in user
@@ -80,7 +81,7 @@ const encodedCredentials = btoa(`${username}:${password}`);
       headers: {
         'Authorization': `Basic ${encodedCredentials}`,
         'Content-Type': 'application/json',
-    },
+      },
       body: JSON.stringify(updatedData)
     })
       .then(response => response.json())
@@ -224,7 +225,7 @@ const encodedCredentials = btoa(`${username}:${password}`);
     user.toLowerCase().includes(onlineSearchQuery.toLowerCase())
   );
 
-
+  
 
   useEffect(() => {
     if (loggedInUser) {
@@ -237,63 +238,70 @@ const encodedCredentials = btoa(`${username}:${password}`);
     }
   }, [loggedInUser]);
 
+  useEffect(() => {
+    // Focus the input when the modal is opened
+    if (showAddChatModal && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [showAddChatModal]);
+
 
   return (
     <div className="chat-header chat-list-container p-3 d-flex flex-column" style={{ height: '100vh', borderRight: '1px solid #ddd' }}>
-    {/* Chats header */}
-    <div className="chat-header-title mb-3 d-flex justify-content-between align-items-center p-2 bg-gradient shadow-sm">
-      <h5 className="chat-title mb-0 d-flex align-items-center">
-        <i className="fas fa-comments me-2 text-primary chat-icon"></i> Chatify
-      </h5>
-      {/* Add Chat Button */}
-      <button className="btn btn-success" onClick={handleShowAddChatModal}>
-        <i className="fas fa-plus me-2"></i> Add Chat
-      </button>
-    </div>
-
-    {/* Tabs */}
-    <ul className="nav nav-tabs" id="chatTabs" role="tablist">
-      <li className="nav-item" role="presentation">
-        <button
-          className="nav-link active"
-          id="chats-tab"
-          data-bs-toggle="tab"
-          data-bs-target="#chats"
-          type="button"
-          role="tab"
-          aria-controls="chats"
-          aria-selected="true"
-        >
-          Chats
+      {/* Chats header */}
+      <div className="chat-header-title mb-3 d-flex justify-content-between align-items-center p-2 bg-gradient shadow-sm">
+        <h5 className="chat-title mb-0 d-flex align-items-center">
+          <i className="fas fa-comments me-2 text-primary chat-icon"></i> Chatify
+        </h5>
+        {/* Add Chat Button */}
+        <button className="btn btn-success" onClick={handleShowAddChatModal}>
+          <i className="fas fa-plus me-2"></i> Add Chat
         </button>
-      </li>
-      <li className="nav-item" role="presentation">
-        <button
-          className="nav-link"
-          id="online-users-tab"
-          data-bs-toggle="tab"
-          data-bs-target="#online-users"
-          type="button"
-          role="tab"
-          aria-controls="online-users"
-          aria-selected="false"
-        >
-          Online Users
-        </button>
-      </li>
-    </ul>
+      </div>
 
-    {/* Tab Content */}
-    <div className="tab-content" id="chatTabsContent" style={{ height: '100%', overflow: 'auto' }}>
-      {/* Chat List Tab */}
-      <div
-        className="tab-pane fade show active"
-        id="chats"
-        role="tabpanel"
-        aria-labelledby="chats-tab"
-      >
-        {/* Search bar */}
-        <div className="mb-3">
+      {/* Tabs */}
+      <ul className="nav nav-tabs" id="chatTabs" role="tablist">
+        <li className="nav-item" role="presentation">
+          <button
+            className="nav-link active"
+            id="chats-tab"
+            data-bs-toggle="tab"
+            data-bs-target="#chats"
+            type="button"
+            role="tab"
+            aria-controls="chats"
+            aria-selected="true"
+          >
+            Chats
+          </button>
+        </li>
+        <li className="nav-item" role="presentation">
+          <button
+            className="nav-link"
+            id="online-users-tab"
+            data-bs-toggle="tab"
+            data-bs-target="#online-users"
+            type="button"
+            role="tab"
+            aria-controls="online-users"
+            aria-selected="false"
+          >
+            Online Users
+          </button>
+        </li>
+      </ul>
+
+      {/* Tab Content */}
+      <div className="tab-content" id="chatTabsContent" style={{ height: '100%', overflow: 'auto' }}>
+        {/* Chat List Tab */}
+        <div
+          className="tab-pane fade show active"
+          id="chats"
+          role="tabpanel"
+          aria-labelledby="chats-tab"
+        >
+          {/* Search bar */}
+          <div className="mb-3">
             <input
               type="text"
               className="form-control"
@@ -303,70 +311,70 @@ const encodedCredentials = btoa(`${username}:${password}`);
             />
           </div>
 
-        {/* Chat list */}
-        <div className="list-group flex-grow-1 overflow-auto">
-          {filteredChats.length > 0 ? (
-            filteredChats.map((chat, index) => (
-              <div
-                key={index}
-                className={`list-group-item list-group-item-action d-flex align-items-center justify-content-between mb-2 border-0 rounded chat-list-item ${selectedChat && selectedChat.id === chat.id ? 'active-chat' : ''}`}
-                onClick={() => onChatSelect(chat)}
-                style={{ height: '80px' }}
-              >
-                <div className="d-flex align-items-center me-3">
-                  {chat.participants.length === 2 ? (
-                    <div className="chat-avatar-container">
+          {/* Chat list */}
+          <div className="list-group flex-grow-1 overflow-auto">
+            {filteredChats.length > 0 ? (
+              filteredChats.map((chat, index) => (
+                <div
+                  key={index}
+                  className={`list-group-item list-group-item-action d-flex align-items-center justify-content-between mb-2 border-0 rounded chat-list-item ${selectedChat && selectedChat.id === chat.id ? 'active-chat' : ''}`}
+                  onClick={() => onChatSelect(chat)}
+                  style={{ height: '80px' }}
+                >
+                  <div className="d-flex align-items-center me-3">
+                    {chat.participants.length === 2 ? (
+                      <div className="chat-avatar-container">
+                        <img
+                          src={chat.participants[0].avatar || avatar}
+                          alt={`${chat.participants[0].name} avatar`}
+                          className="chat-avatar chat-avatar-1"
+                        />
+                        <img
+                          src={chat.participants[1].avatar || avatar}
+                          alt={`${chat.participants[1].name} avatar`}
+                          className="chat-avatar chat-avatar-2"
+                        />
+                      </div>
+                    ) : (
                       <img
-                        src={chat.participants[0].avatar || avatar}
-                        alt={`${chat.participants[0].name} avatar`}
-                        className="chat-avatar chat-avatar-1"
+                        src={loggedInUser.avatarUrl}
+                        alt="Chat avatar"
+                        className="rounded-circle chat-list-image"
+                        style={{ width: '30px', height: '30px' }}
                       />
-                      <img
-                        src={chat.participants[1].avatar || avatar}
-                        alt={`${chat.participants[1].name} avatar`}
-                        className="chat-avatar chat-avatar-2"
-                      />
-                    </div>
-                  ) : (
-                    <img
-                      src={loggedInUser.avatarUrl}
-                      alt="Chat avatar"
-                      className="rounded-circle chat-list-image"
-                      style={{ width: '30px', height: '30px' }}
-                    />
-                  )}
-                </div>
+                    )}
+                  </div>
 
-                <div className="w-100">
-                  <h6 className="mb-1">{chat.name}</h6>
-                  {selectedChat && selectedChat.id === chat.id ? null : (
-                    <p className="mb-1 text-muted">{chat.latestMessage}</p>
-                  )}
-                </div>
+                  <div className="w-100">
+                    <h6 className="mb-1">{chat.name}</h6>
+                    {selectedChat && selectedChat.id === chat.id ? null : (
+                      <p className="mb-1 text-muted">{chat.latestMessage}</p>
+                    )}
+                  </div>
 
-                {!selectedChat || selectedChat.id !== chat.id ? (
-                  chat.unreadMessages > 0 && (
-                    <span className="badge bg-primary rounded-pill">
-                      {chat.unreadMessages}
-                    </span>
-                  )
-                ) : null}
-              </div>
-            ))
-          ) : (
-            <p>No chats found</p>
-          )}
+                  {!selectedChat || selectedChat.id !== chat.id ? (
+                    chat.unreadMessages > 0 && (
+                      <span className="badge bg-primary rounded-pill">
+                        {chat.unreadMessages}
+                      </span>
+                    )
+                  ) : null}
+                </div>
+              ))
+            ) : (
+              <p>No chats found</p>
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* Online Users Tab */}
-      <div
-        className="tab-pane fade"
-        id="online-users"
-        role="tabpanel"
-        aria-labelledby="online-users-tab"
-      >
-        <div className="mb-3">
+        {/* Online Users Tab */}
+        <div
+          className="tab-pane fade"
+          id="online-users"
+          role="tabpanel"
+          aria-labelledby="online-users-tab"
+        >
+          <div className="mb-3">
             <input
               type="text"
               className="form-control"
@@ -375,28 +383,28 @@ const encodedCredentials = btoa(`${username}:${password}`);
               onChange={(e) => setOnlineSearchQuery(e.target.value)}
             />
           </div>
-        <div className="list-group flex-grow-1 overflow-auto">
-        {filteredOnlineUsers.length > 0 ? (
+          <div className="list-group flex-grow-1 overflow-auto">
+            {filteredOnlineUsers.length > 0 ? (
               filteredOnlineUsers.map((user, index) => (
-              <div key={index} className="list-group-item d-flex align-items-center justify-content-between mb-2 border-0 rounded">
-                <div className="d-flex align-items-center">
-                  <img
-                    src={user.avatarUrl || avatar}
-                    alt={`${user.name} avatar`}
-                    className="rounded-circle me-3"
-                    style={{ width: '40px', height: '40px' }}
-                  />
-                  <span>{user}</span>
+                <div key={index} className="list-group-item d-flex align-items-center justify-content-between mb-2 border-0 rounded">
+                  <div className="d-flex align-items-center">
+                    <img
+                      src={user.avatarUrl || avatar}
+                      alt={`${user.name} avatar`}
+                      className="rounded-circle me-3"
+                      style={{ width: '40px', height: '40px' }}
+                    />
+                    <span>{user}</span>
+                  </div>
+                  <span className="badge bg-success">Online</span>
                 </div>
-                <span className="badge bg-success">Online</span>
-              </div>
-            ))
-          ) : (
-            <p>No users online</p>
-          )}
+              ))
+            ) : (
+              <p>No users online</p>
+            )}
+          </div>
         </div>
       </div>
-    </div>
 
 
 
@@ -448,6 +456,7 @@ const encodedCredentials = btoa(`${username}:${password}`);
                   placeholder="Enter username"
                   value={newChatName}
                   onChange={(e) => setNewChatName(e.target.value)}
+                  ref={inputRef} // Set the input ref to focus on
                 />
               </div>
               <div className="modal-footer">
@@ -491,6 +500,7 @@ const encodedCredentials = btoa(`${username}:${password}`);
                     className={`online-badge-modal ${userDetails.onlineStatus.toLowerCase()}-status`}>
                   </span>
                 </div>
+
                 {/* Online Status Dropdown */}
                 {isEditing ? (
                   <div className="form-floating">
@@ -511,6 +521,15 @@ const encodedCredentials = btoa(`${username}:${password}`);
                   <p>{userDetails.onlineStatus}</p>
                 )}
                 <hr></hr>
+                {/* Conditionally Render Dashboard Button */}
+                {loggedInUser.name === 'admin' && (
+                  <button
+                    className="btn btn-primary mb-2"
+                    onClick={() => window.location.href = '/dashboard'}
+                  >
+                    <i className="fas fa-chart-bar me-2"></i> Dashboard
+                  </button>
+                )}
                 {/* About Me Field */}
                 <div className="form-floating">
                   {isEditing ? (
@@ -560,6 +579,7 @@ const encodedCredentials = btoa(`${username}:${password}`);
 
               </div>
               <div className="modal-footer">
+
                 {!isEditing ? (
                   <button
                     type="button"
@@ -580,7 +600,7 @@ const encodedCredentials = btoa(`${username}:${password}`);
                 <button
                   type="button"
                   className="btn btn-secondary"
-                  onClick={handleCloseModal} // Close button now resets isEditing
+                  onClick={handleCloseModal}
                 >
                   Close
                 </button>

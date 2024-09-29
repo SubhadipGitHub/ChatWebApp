@@ -28,7 +28,7 @@ const password = localStorage.getItem('password'); // Get password from local st
 // Encode the credentials for Basic Auth
 const encodedCredentials = btoa(`${username}:${password}`);
 
-const ChatDetail = ({ chatId, chatName, chatimage, chatparticipants, loggedInUser, onlineusers }) => {
+const ChatDetail = ({ chatId, chatName, chatimage,onUpdateMessage, chatparticipants, loggedInUser, onlineusers }) => {
   const [message, setMessage] = useState('');
   const [onlinestatus, setOnlineStatus] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false); // State to show/hide emoji picker
@@ -140,13 +140,18 @@ const ChatDetail = ({ chatId, chatName, chatimage, chatparticipants, loggedInUse
     const handleNewMessage = (msg) => {
       console.log(msg);
       console.log(loggedInUser.name);
+      
       if (Array.isArray(msg.receiver) && msg.receiver.includes(loggedInUser.name)) {
         //console.log(chatId);
+        // Strip the message content to the first 50 characters
+        const truncatedContent = msg.content.length > 50
+        ? msg.content.slice(0, 50) + '...'
+        : msg.content;
+
+        // Call the update function passed from ChatList to update the latest message
+        onUpdateMessage(msg.chat_id, truncatedContent);
         if (msg.chat_id !== chatId) {
-          // Strip the message content to the first 50 characters
-          const truncatedContent = msg.content.length > 50
-            ? msg.content.slice(0, 50) + '...'
-            : msg.content;
+          
           const received_msg = `${truncatedContent}`;
           //console.log(received_msg);
           playSound(); // Play the sound when the toast is triggered
@@ -183,7 +188,7 @@ const ChatDetail = ({ chatId, chatName, chatimage, chatparticipants, loggedInUse
     return () => {
       socket.off("new_message", handleNewMessage);
     };
-  }, [chatId, loggedInUser]);
+  }, [chatId, loggedInUser,onUpdateMessage]);
 
   // Scroll to the bottom whenever messages change
   useEffect(() => {
