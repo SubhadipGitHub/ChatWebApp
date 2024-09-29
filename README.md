@@ -57,11 +57,11 @@ Key components:
 
 Here's an example of how the frontend layout is structured:
 
-![UI Layout Register](Frontend\chat-app\public\Demo-register.png)
+![UI Layout Register](Frontend/chat-app/public/Demo-register.png)
 
-![UI Layout Login](Frontend\chat-app\public\Demo-login.png)
+![UI Layout Login](Frontend/chat-app/public/Demo-login.png)
 
-![UI Layout Chat](Frontend\chat-app\public\Demo-chat.png)
+![UI Layout Chat](Frontend/chat-app/public/Demo-chat.png)
 
 ---
 
