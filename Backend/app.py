@@ -38,6 +38,7 @@ sio = socketio.AsyncServer(
     cors_allowed_origins=["http://localhost:3000"]  # Allow frontend origin for WebSocket
 )
 
+
 # Store connected users in a set or a dictionary
 online_users = set()
 online_user_list = []
@@ -45,7 +46,12 @@ online_user_list = []
 # Backend initialization hook
 @app.on_event("startup")
 async def on_startup():
+    print("FastAPI app is starting...")
     await create_admin_user()
+    
+@app.on_event("shutdown")
+async def shutdown_event():
+    print("FastAPI app is shutting down...")
 
 # Handle socket disconnection
 @sio.event
@@ -311,10 +317,25 @@ async def create_chat(chat: ChatCreate, username: str = Depends(authenticate_use
         "created_at": datetime.utcnow(),
         "created_by": username, # Add the created_by field
         "last_updated":datetime.utcnow(),
-        "last_updated_by": username
+        "last_updated_by": username,
+        "latestMessage":None,
+        "unreadMessageCounter":0
     }
     
     new_chat = await chat_collection.insert_one(chat_data)
+    
+    if(len(unique_chat_paticipants_list)>1):
+        # Extract the receiver's username
+        receiver = [user for user in unique_chat_paticipants_list if user != username][0]
+
+        # Emit the new chat event to the receiver
+        await sio.emit('new_chat', {
+            "chat_id": str(new_chat.inserted_id),
+            "name": chat_name,
+            "image": chat_image, 
+            "participants": unique_chat_paticipants_list
+        })  # Emit the event only to the receiver
+    
     return {"chat_id": str(new_chat.inserted_id),"name":chat_name,"participants":unique_chat_paticipants_list,"image": chat_image}
 
 # Fetch messages for a specific chat room (endpoint example)

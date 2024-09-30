@@ -1,4 +1,4 @@
-import React, { useState, useEffect ,useRef, useCallback} from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import ChatList from './ChatList';
 import ChatDetail from './ChatDetail';
 import './Chat.css';
@@ -14,7 +14,7 @@ const ChatPage = () => {
   const [selectedChat, setSelectedChat] = useState(null);
   const [loggedInUser, setLoggedInUser] = useState({});
   const [onlineUsers, setOnlineUsers] = useState([]);
-  
+
   const isConnected = useRef(false); // Track connection status
 
   // Fetch chats after confirming the user is logged in
@@ -42,8 +42,8 @@ const ChatPage = () => {
         name: chat.name,
         image: chat.image,
         participants: chat.participants || [],
-        latestMessage:chat.latestMessage,
-        unreadMessages:chat.unreadMessageCounter
+        latestMessage: chat.latestMessage,
+        unreadMessages: chat.unreadMessageCounter
       }));
 
       setChats(formattedChats);
@@ -60,11 +60,8 @@ const ChatPage = () => {
   useEffect(() => {
     const user = localStorage.getItem('user');
 
-    if (user) {
-      const parsedUser = JSON.parse(user);
-      console.log(parsedUser);      
-      setLoggedInUser(parsedUser);
-      console.log(loggedInUser);
+    if (user) {          
+      const parsedUser = JSON.parse(user); 
 
       // Ensure socket is only initialized once
       if (!socket) {
@@ -76,7 +73,10 @@ const ChatPage = () => {
 
         if (!isConnected.current) {
           console.log('Socket connected. Emitting user_connected...');
-          socket.emit('user_connected', { username: parsedUser.name });
+          socket.emit('user_connected', { username: parsedUser.name });          
+          
+          setLoggedInUser(parsedUser);
+          console.log(loggedInUser);
           isConnected.current = true; // Mark the socket as connected
         };
 
@@ -97,9 +97,29 @@ const ChatPage = () => {
           setOnlineUsers(data.online_users);
           console.log(`${data.username} is offline`);
         });
+
+        // Listen for the new chat event
+        socket.on('new_chat', (chatData) => {
+          // Check if the logged-in user is the receiver of the new chat
+          console.log('New chat received:', chatData);
+          console.log(loggedInUser);
+          if (chatData.participants.includes(loggedInUser.name)) {
+            console.log('New chat received:', chatData);
+            // Add the new chat to the list
+            setChats((prevChats) => [...prevChats, {
+              id: chatData.chat_id,
+              name: chatData.name,
+              image: chatData.image,
+              participants: chatData.participants,
+              unreadMessages:0
+            }]);
+          }
+        });
       }
 
       fetchChats();  // Assuming this is a function to fetch chats
+
+
     } else {
       console.warn("User is not logged in. Socket connection will not be established.");
     }
@@ -110,10 +130,11 @@ const ChatPage = () => {
         socket.off('connect');
         socket.off('user_online');
         socket.off('user_offline');
+        socket.off('new_chat');
         socket = null;  // Clear the socket variable to prevent reinitialization
       }
     };
-  }, []);  // Empty dependency ensures it runs only once
+  }, [loggedInUser]);  // Empty dependency ensures it runs only once
 
   const handleChatSelect = (chat) => {
     setSelectedChat(chat);
@@ -125,25 +146,24 @@ const ChatPage = () => {
   };
 
   // Memoize the update function using useCallback
-  const updateLatestMessage = useCallback((chat_id, newMessage,read) => {
+  const updateLatestMessage = useCallback((chat_id, newMessage, read) => {
     //console.log("update latest message");
     //console.log(`Before update`);
     //console.log(chats);
-    if(read===true)
-    {
+    if (read === true) {
       setChats((prevChats) =>
         prevChats.map((chat) =>
-          chat.id === chat_id ? { ...chat, unreadMessages:0 } : chat
+          chat.id === chat_id ? { ...chat, unreadMessages: 0 } : chat
         )
       );
     }
-    else{
-    setChats((prevChats) =>
-      prevChats.map((chat) =>
-        chat.id === chat_id ? { ...chat, latestMessage: newMessage,unreadMessages:chat.unreadMessages+1 } : chat
-      )
-    );
-  }
+    else {
+      setChats((prevChats) =>
+        prevChats.map((chat) =>
+          chat.id === chat_id ? { ...chat, latestMessage: newMessage, unreadMessages: chat.unreadMessages + 1 } : chat
+        )
+      );
+    }
     //console.log(`After update ${chat_id}-${newMessage}`);
     //console.log(chats);
   }, [setChats]); // Dependency array should include setChats
@@ -155,27 +175,27 @@ const ChatPage = () => {
       </div>
 
       <div className={`col-md-8 chat-detail-container d-flex align-items-center justify-content-center ${selectedChat ? 'active' : ''}`}>
-      {selectedChat ? (
-        <ChatDetail
-          chatId={selectedChat.id}
-          chatimage={selectedChat.image}
-          chatName={selectedChat.name}
-          loggedInUser={loggedInUser}
-          onlineusers={onlineUsers}
-          chatparticipants={selectedChat.participants}
-          onUpdateMessage={updateLatestMessage}
-        />
-      ) : (
-        // Render Help Text when no chat is selected        
-        <div className="help-text text-center animate-fade-in">        
-        <h2 className="h4 mb-3 text-primary">No Chat Selected</h2>
-        <div className="mb-4">
-          <i className="bi bi-chat-dots-fill icon-style"></i>
-        </div>
-        <p className="text-muted">Please select a chat from the list to start messaging.</p>
+        {selectedChat ? (
+          <ChatDetail
+            chatId={selectedChat.id}
+            chatimage={selectedChat.image}
+            chatName={selectedChat.name}
+            loggedInUser={loggedInUser}
+            onlineusers={onlineUsers}
+            chatparticipants={selectedChat.participants}
+            onUpdateMessage={updateLatestMessage}
+          />
+        ) : (
+          // Render Help Text when no chat is selected        
+          <div className="help-text text-center animate-fade-in">
+            <h2 className="h4 mb-3 text-primary">No Chat Selected</h2>
+            <div className="mb-4">
+              <i className="bi bi-chat-dots-fill icon-style"></i>
+            </div>
+            <p className="text-muted">Please select a chat from the list to start messaging.</p>
+          </div>
+        )}
       </div>
-      )}
-    </div>
 
       <ToastContainer />
     </div>
