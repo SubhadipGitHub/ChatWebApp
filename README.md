@@ -32,14 +32,81 @@ Key features of the FastAPI backend:
 - **Message storage** in MongoDB Atlas.
 - **WebSocket support** for real-time messaging.
 
-### Key Endpoints
 
-- **POST /register:** Register a new user.
-- **POST /login:** User authentication with OAuth2.
-- **GET /chats/{user_id}:** Retrieve all messages for a user.
-- **WebSocket /ws/chat:** Real-time communication channel for chat.
+### **User Endpoints**
+
+#### **POST** `/register`
+- **Description:** Register a new user.
+- **Request Body:**
+  - `email` (String): User's email address
+  - `username` (String): Unique username
+  - `password` (String): Password for the account
+  - `timezone` (String): User's timezone
+  - `gender` (String): User's gender
+
+#### **POST** `/login`
+- **Description:** Log in an existing user.
+- **Request Body:**
+  - `username` (String): Unique username
+  - `password` (String): Password for the account
+
+#### **GET** `/server_status`
+- **Description:** Check the status of the server.
+- **Response:**
+  - `status` (String): "Online" if the server is operational.
 
 ---
+
+### **Admin Endpoints**
+
+#### **DELETE** `/drop_collections`
+- **Description:** Drop all MongoDB collections. **(Admin only)**
+- **Response:**
+  - A confirmation message indicating the collections have been dropped.
+
+---
+
+### **User Profile Endpoints**
+
+#### **PUT** `/users/{user_id}`
+- **Description:** Update user information.
+- **Path Parameters:**
+  - `user_id` (String): The ID of the user to update
+- **Request Body:**
+  - Fields to update: `email`, `aboutme`, `password`, etc.
+  
+#### **GET** `/users/{user_id}`
+- **Description:** Retrieve information about a user.
+- **Path Parameters:**
+  - `user_id` (String): The ID of the user to fetch.
+
+---
+
+### **Chat Endpoints**
+
+#### **POST** `/chats/`
+- **Description:** Create a new chat between users.
+- **Request Body:**
+  - `participants` (List of Strings): List of usernames to include in the chat.
+
+#### **GET** `/chats/{chat_id}/messages`
+- **Description:** Fetch all messages for a specific chat.
+- **Path Parameters:**
+  - `chat_id` (String): The ID of the chat to fetch messages for.
+
+#### **GET** `/chats`
+- **Description:** Fetch all chats for the logged-in user with pagination support.
+- **Query Parameters:**
+  - `page` (Integer): Page number for pagination (default is 1).
+  - `limit` (Integer): Number of chats to fetch per page (default is 10).
+
+---
+
+This documentation provides a clear overview of the available endpoints, describing each endpoint's functionality, the required input (e.g., path parameters or request body), and the expected output.
+
+`http://localhost:8000/docs`
+
+![UI Fastapi docs](Frontend/chat-app/public/Demo-FastAPI.png)
 
 ## Frontend (React + Bootstrap)
 
