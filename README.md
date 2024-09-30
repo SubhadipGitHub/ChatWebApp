@@ -81,26 +81,53 @@ We use **MongoDB Atlas** to store user profiles, chat lists, and message history
 
 ### MongoDB Schema
 
-- **Users Collection:**
-  - `username`
-  - `password_hash`
-  - `email`
-  - `created_at`
+#### **Users Collection:**
 
-- **Chats Collection:**
-  - `user_id`
-  - `participants`
-  - `last_message`
-  - `created_at`
-
-- **Messages Collection:**(Inside chats)
-  - `chat_id`
-  - `sender`
-  - `receiver`
-  - `content`
-  - `timestamp`
+| Field            | Type      | Description                                         |
+|------------------|-----------|-----------------------------------------------------|
+| `_id`            | ObjectId  | Unique user ID                                      |
+| `email`          | String    | User's email address                                |
+| `online_status`  | String    | Current status of the user (e.g., Online, Offline)  |
+| `timezone`       | String    | User's timezone (e.g., IST)                         |
+| `aboutme`        | String    | Short bio of the user                               |
+| `username`       | String    | Unique username                                     |
+| `password`       | String    | Hashed password for authentication                  |
+| `gender`         | String    | User's gender                                       |
+| `avatarUrl`      | String    | URL to the user's avatar image                      |
+| `creation_date`  | Date      | Timestamp of account creation                       |
 
 ---
+
+#### **Chats Collection:**
+
+| Field                | Type      | Description                                         |
+|----------------------|-----------|-----------------------------------------------------|
+| `_id`                | String    | Unique chat identifier (composite of usernames)     |
+| `name`               | String    | Chat name, often based on participants              |
+| `image`              | String    | URL for chat image (auto-generated)                 |
+| `participants`       | Array     | List of usernames involved in the chat              |
+| `created_at`         | Date      | Timestamp when the chat was created                 |
+| `created_by`         | String    | Username of the user who created the chat           |
+| `last_updated`       | Date      | Timestamp of the last update                       |
+| `last_updated_by`    | String    | Username of the user who last updated the chat      |
+| `latestMessage`      | String    | The latest message in the chat                     |
+| `unreadMessageCounter`| Integer  | Count of unread messages                           |
+
+---
+
+#### **Messages Collection** (Embedded in `Chats`):
+
+| Field     | Type      | Description                                     |
+|-----------|-----------|-------------------------------------------------|
+| `content` | String    | Message content                                 |
+| `sender`  | String    | Username of the message sender                  |
+| `receiver`| Array     | Array of recipient usernames                    |
+| `time`    | Date      | ISO timestamp of when the message was sent      |
+
+---
+
+This schema reflects how user information, chat details, and messages are structured within MongoDB.
+
 
 ## Running the Application
 
