@@ -42,6 +42,47 @@ const ChatDetail = ({ chatId, chatName, chatimage, onUpdateMessage, chatparticip
     }
   );
   const [showModal, setShowModal] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [isEnabled, setIsEnabled] = useState(false); // Initial state for disappearing messages
+
+  const handleCheckboxChange = () => {
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirm = () => {
+    setIsEnabled((prev) => !prev); // Toggle the state
+    setShowConfirmModal(false);
+  };
+
+  const handleCancel = () => {
+    setShowConfirmModal(false);
+  };
+
+  const ConfirmModal = ({ showConfirmModal, onConfirm, onCancel }) => {
+    if (!showConfirmModal) return null;
+
+    return (
+      <div className="modal fade show" style={{ display: 'block' }} tabIndex="-1">
+        <div className="modal-dialog">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title">Confirm Action</h5>
+              <button type="button" className="btn-close" onClick={onCancel}></button>
+            </div>
+            <div className="modal-body">
+              <p>Are you sure you want to {isEnabled ? 'disable' : 'enable'} Vanish Mode</p>
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" onClick={onCancel}>Cancel</button>
+              <button type="button" className="btn btn-primary" onClick={onConfirm}>Confirm</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+
 
   const handleOpenModal = () => setShowModal(true);
   const handleCloseModal = () => setShowModal(false);
@@ -253,29 +294,112 @@ const ChatDetail = ({ chatId, chatName, chatimage, onUpdateMessage, chatparticip
     }
   };
 
+  const handleExportChat = async () => {
+    // Add logic for exporting chat
+    console.log(`Export Chat clicked ${chatId}`);
+    const url = `http://localhost:8000/export-chat/${chatId}`; // Replace with your API URL
+
+    // Create a base64 encoded string for the Basic Authentication
+    const headers = new Headers();
+    headers.append('Authorization', 'Basic ' + btoa(`${username}:${password}`)); // Use existing username and password
+
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: headers,
+      });
+
+      if (response.ok) {
+        const blob = await response.blob(); // Get the response as a blob
+        const url = window.URL.createObjectURL(blob); // Create a URL for the blob
+        const a = document.createElement('a'); // Create a link element
+        a.href = url;
+        a.download = `chat_${chatId}.txt`; // Set the file name
+        document.body.appendChild(a); // Append the link to the body
+        a.click(); // Simulate a click on the link to trigger the download
+        a.remove(); // Remove the link from the document
+
+        // Show success toast notification
+        toast.success('Chat exported successfully!');
+      } else {
+        console.error('Failed to export chat:', response.statusText);
+        // Show error toast notification
+        toast.error('Failed to export chat. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error exporting chat:', error);
+      // Show error toast notification
+      toast.error('An error occurred while exporting the chat. Please check the console for details.');
+    }
+  };
+
   return (
     <div className="chat-detail-container d-flex flex-column flex-grow-1">
-      <div className="chat-header p-3 bg-light border-bottom d-flex align-items-center" onClick={handleOpenModal}>
-        <img
-          src={receiverDetails.avatarUrl || 'https://via.placeholder.com/50'}
-          alt="Chat"
-          className="chat-detail-image rounded-circle me-3"
-          style={{ width: '50px', height: '50px', cursor: 'pointer' }}
-        />
-        <div className="chat-header-info">
-          <h5 className="mb-0">{receiverDetails.name}</h5>
-          {/* Online status */}
-          <div className="d-flex align-items-center mt-1">
-            <span
-              className={`me-1 rounded-circle ${onlinestatus ? 'bg-success' : 'bg-secondary'}`}
-              style={{ width: '8px', height: '8px' }}
-            />
-            <span className={`text-${onlinestatus ? 'success' : 'muted'} small`}>
-              {onlinestatus ? 'Online' : 'Offline'}
-            </span>
+      <div className="chat-header p-3 bg-light border-bottom d-flex align-items-center justify-content-between">
+        {/* Left Section with Avatar and Info */}
+        <div className="d-flex align-items-center" onClick={handleOpenModal}>
+          <img
+            src={receiverDetails.avatarUrl || 'https://via.placeholder.com/50'}
+            alt="Chat"
+            className="chat-detail-image rounded-circle me-3"
+            style={{ width: '50px', height: '50px', cursor: 'pointer' }}
+          />
+          <div className="chat-header-info">
+            <h5 className="mb-0">{receiverDetails.name}</h5>
+            <div className="d-flex align-items-center mt-1">
+              <span
+                className={`me-1 rounded-circle ${onlinestatus ? 'bg-success' : 'bg-secondary'}`}
+                style={{ width: '8px', height: '8px' }}
+              />
+              <span className={`text-${onlinestatus ? 'success' : 'muted'} small`}>
+                {onlinestatus ? 'Online' : 'Offline'}
+              </span>
+            </div>
           </div>
         </div>
+
+        {/* 3-dot vertical dropdown menu for actions */}
+        <div className="dropdown">
+          <button
+            className="btn btn-link p-0"
+            type="button"
+            id="chatActionsDropdown"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+            style={{ fontSize: '1.5rem', color: 'black' }}
+          >
+            <i className="bi bi-three-dots-vertical"></i>
+          </button>
+          <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="chatActionsDropdown">
+            <li>
+              <button className="dropdown-item" onClick={handleExportChat}>
+                <i className="bi bi-file-earmark-arrow-down me-2"></i> Export Chat
+              </button>
+            </li>
+            <li>
+              <div className="dropdown-item">
+                <input
+                  className="form-check-input me-2" // Add right margin
+                  type="checkbox"
+                  id="disappearingMessages"
+                  checked={isEnabled}
+                  onChange={handleCheckboxChange}
+                />
+                <label className="form-check-label" htmlFor="disappearingMessages">
+                  Vanish Mode
+                </label>
+              </div>
+            </li>
+
+          </ul>
+        </div>
+        <ConfirmModal
+          showConfirmModal={showConfirmModal}
+          onConfirm={handleConfirm}
+          onCancel={handleCancel}
+        />
       </div>
+
 
       {/* Modal for receiver details */}
       <div className={`modal fade ${showModal ? 'show d-block' : ''}`} tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
@@ -315,52 +439,54 @@ const ChatDetail = ({ chatId, chatName, chatimage, onUpdateMessage, chatparticip
         </div>
       </div>
 
-      <div className="chat-messages flex-grow-1 overflow-auto p-3" ref={chatMessagesRef}>
-  {messages.length === 0 ? (
-    <div className="d-flex flex-column align-items-center justify-content-center h-100">
-      <i className="bi bi-chat-dots-fill" style={{ fontSize: '3rem', color: '#007bff' }}></i>
-      <h2 className="h4 mt-3 text-primary">No messages yet</h2>
-      <p className="text-muted">Say hi to start a conversation</p>
-    </div>
-  ) : (
-    messages.map((msg, index) => {
-      const currentMessageDate = new Date(msg.time);
-      const currentDateLabel = formatDate(currentMessageDate);
-      const previousMessageDate = index > 0 ? new Date(messages[index - 1].time) : null;
-      const previousDateLabel = previousMessageDate ? formatDate(previousMessageDate) : null;
-      const showDateSeparator = index === 0 || currentDateLabel !== previousDateLabel;
 
-      return (
-        <div key={index}>
-          {showDateSeparator && (
-            <div className="date-separator text-center my-2">
-              <span className="badge bg-light text-dark">{currentDateLabel}</span>
-            </div>
-          )}
-          <div className={`message ${msg.sender === loggedInUser.name ? 'message-sent' : 'message-received'} d-flex`}>
-            <img
-              src={msg.sender === loggedInUser.name ? loggedInUser.avatarUrl : receiverDetails.avatarUrl}
-              alt={msg.sender}
-              className="rounded-circle me-2"
-              style={{ width: '40px', height: '40px' }}
-            />
-            <div className="message-content">
-              <p>{msg.content}</p>
-              <span className="message-time">
-                {currentMessageDate.toLocaleTimeString([], {
-                  hour: 'numeric',
-                  minute: '2-digit',
-                  hour12: true,
-                  timeZone: 'Asia/Kolkata',
-                })}
-              </span>
-            </div>
+
+      <div className="chat-messages flex-grow-1 overflow-auto p-3" ref={chatMessagesRef}>
+        {messages.length === 0 ? (
+          <div className="d-flex flex-column align-items-center justify-content-center h-100">
+            <i className="bi bi-chat-dots-fill" style={{ fontSize: '3rem', color: '#007bff' }}></i>
+            <h2 className="h4 mt-3 text-primary">No messages yet</h2>
+            <p className="text-muted">Say hi to start a conversation</p>
           </div>
-        </div>
-      );
-    })
-  )}
-</div>
+        ) : (
+          messages.map((msg, index) => {
+            const currentMessageDate = new Date(msg.time);
+            const currentDateLabel = formatDate(currentMessageDate);
+            const previousMessageDate = index > 0 ? new Date(messages[index - 1].time) : null;
+            const previousDateLabel = previousMessageDate ? formatDate(previousMessageDate) : null;
+            const showDateSeparator = index === 0 || currentDateLabel !== previousDateLabel;
+
+            return (
+              <div key={index}>
+                {showDateSeparator && (
+                  <div className="date-separator text-center my-2">
+                    <span className="badge bg-light text-dark">{currentDateLabel}</span>
+                  </div>
+                )}
+                <div className={`message ${msg.sender === loggedInUser.name ? 'message-sent' : 'message-received'} d-flex`}>
+                  <img
+                    src={msg.sender === loggedInUser.name ? loggedInUser.avatarUrl : receiverDetails.avatarUrl}
+                    alt={msg.sender}
+                    className="rounded-circle me-2"
+                    style={{ width: '40px', height: '40px' }}
+                  />
+                  <div className="message-content">
+                    <p>{msg.content}</p>
+                    <span className="message-time">
+                      {currentMessageDate.toLocaleTimeString([], {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true,
+                        timeZone: 'Asia/Kolkata',
+                      })}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
 
 
       <div className="chat-input p-3 d-flex align-items-center bg-light border-top">

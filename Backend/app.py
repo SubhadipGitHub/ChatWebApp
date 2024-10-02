@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, Depends, status, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import socketio
 from typing import List, Optional
@@ -9,8 +10,10 @@ from db import chat_collection, user_collection,client
 from models import Chat, Message, User,ChatCreate,UserUpdateModel
 from bson.objectid import ObjectId
 from datetime import datetime
+from dateutil import parser  
 from pymongo import ASCENDING, DESCENDING
 from pymongo.errors import PyMongoError
+from io import StringIO
 
 app = FastAPI()
 
@@ -42,6 +45,12 @@ sio = socketio.AsyncServer(
 # Store connected users in a set or a dictionary
 online_users = set()
 online_user_list = []
+
+#custom functions
+def format_message(sender, time_str, content):
+    # Ensure the time is formatted as dd/mm/yy hh:mm:ss
+    formatted_time = time_str.strftime("%d/%m/%y %H:%M:%S")
+    return f"{sender} ({formatted_time}): {content}"
 
 # Backend initialization hook
 @app.on_event("startup")
@@ -348,6 +357,54 @@ async def get_chat_messages(chat_id: str, skip: int = 0, limit: int = 100, usern
     messages = chat.get("messages", [])[skip:skip + limit]
     return {"messages": messages}
 
+@app.get("/export-chat/{chat_id}")
+async def export_chat(chat_id: str,username: str = Depends(authenticate_user)):
+    try:
+        # Fetch the chat messages for the given chat_id
+        chat = await chat_collection.find_one({"_id": chat_id})
+
+        if not chat:
+            raise HTTPException(status_code=404, detail="Chat not found")
+
+        chat_txt = StringIO()
+
+        # Check if there are any messages
+        if "messages" not in chat or len(chat["messages"]) == 0:
+            # No messages found, write the default content
+            chat_txt.write("No messages found\n")
+        else:
+            # Assuming `messages` is a list of dictionaries with 'sender', 'time', and 'content'
+            for message in chat["messages"]:
+                sender = message["sender"]
+                try:
+                    time = parser.isoparse(message["time"])  # Handle ISO 8601 timestamps
+                except ValueError:
+                    time = None  # Handle invalid time format
+
+                content = message["content"]
+                if time:
+                    chat_txt.write(format_message(sender, time, content) + "\n")
+                else:
+                    chat_txt.write(f"{sender} (Unknown time): {content}\n")
+
+        chat_txt.seek(0)  # Move to the start of the file
+
+        # Create a streaming response with the file
+        response = StreamingResponse(chat_txt, media_type="text/plain")
+        response.headers["Content-Disposition"] = f"attachment; filename=chat_{chat_id}.txt"
+
+        return response
+
+    except Exception as e:
+        # Handle any unexpected errors and return an empty file with "No messages found"
+        chat_txt = StringIO()
+        chat_txt.write("No messages found\n")
+        chat_txt.seek(0)
+
+        response = StreamingResponse(chat_txt, media_type="text/plain")
+        response.headers["Content-Disposition"] = f"attachment; filename=chat_{chat_id}.txt"
+        return response
+    
 @app.get("/chats", summary="Fetch chats for a user with pagination")
 async def get_user_chats(
     user_id: str,
